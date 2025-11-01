@@ -3,15 +3,18 @@ import { Page, User } from '../types';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
 import ForgotPasswordForm from '../components/ForgotPasswordForm';
-import AuthHeader from '../components/AuthHeader';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 interface AuthPageProps {
   initialPage: Page;
   onLoginSuccess: (user: User) => void;
   navigate: (page: Page) => void;
+  user: User | null;
+  onLogout: () => void;
 }
 
-const AuthPage: React.FC<AuthPageProps> = ({ initialPage, onLoginSuccess, navigate }) => {
+const AuthPage: React.FC<AuthPageProps> = ({ initialPage, onLoginSuccess, navigate, user, onLogout }) => {
   const [currentPage, setCurrentPage] = useState<Page>(initialPage);
 
   const renderForm = () => {
@@ -28,13 +31,14 @@ const AuthPage: React.FC<AuthPageProps> = ({ initialPage, onLoginSuccess, naviga
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
-        <AuthHeader navigate={navigate} />
-        <div className="bg-white p-8 rounded-b-lg shadow-lg">
+    <div className="flex flex-col min-h-screen bg-gray-100">
+      <Header user={user} onLogout={onLogout} navigate={navigate} isAuthPage />
+      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
           {renderForm()}
         </div>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 };

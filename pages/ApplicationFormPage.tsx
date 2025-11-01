@@ -171,13 +171,13 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50">
       <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-blue-800 uppercase">Đăng ký hồ sơ dự tuyển</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-sky-800 uppercase">Đăng ký hồ sơ dự tuyển</h1>
           <p className="text-gray-600">Chào mừng, {user.fullName}!</p>
         </div>
 
-        <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
+        <div className="mb-8 p-6 bg-sky-50 border border-sky-200 rounded-lg shadow-sm">
           <div className="flex items-center gap-3 mb-4">
-            <SparklesIcon className="w-8 h-8 text-blue-600" />
+            <SparklesIcon className="w-8 h-8 text-sky-600" />
             <h2 className="text-xl font-semibold text-gray-800">Trợ lý AI - Điền hồ sơ nhanh</h2>
           </div>
           <p className="text-gray-600 mb-4 text-sm">
@@ -198,7 +198,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
             type="button"
             onClick={handleAiFill}
             disabled={isAiLoading}
-            className="mt-4 w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-md hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-4 w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-500 to-cyan-600 text-white font-semibold rounded-md hover:from-sky-600 hover:to-cyan-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAiLoading ? (
               <>
@@ -301,7 +301,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
             <button type="submit" className="px-6 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors">
               Lưu thông tin
             </button>
-            <button type="button" onClick={handlePrint} className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
+            <button type="button" onClick={handlePrint} className="px-6 py-2 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700 transition-colors">
               In thông tin
             </button>
              <button type="button" onClick={() => alert('QR Code functionality to be implemented.')} className="px-6 py-2 bg-gray-800 text-white font-semibold rounded-md hover:bg-black transition-colors">

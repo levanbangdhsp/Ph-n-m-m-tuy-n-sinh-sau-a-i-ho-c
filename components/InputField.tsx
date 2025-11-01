@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import EyeIcon from './icons/EyeIcon';
 import EyeSlashIcon from './icons/EyeSlashIcon';
 
@@ -13,7 +12,7 @@ interface InputFieldProps {
   required?: boolean;
 }
 
-const InputField: React.FC<InputFieldProps> = ({
+const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
   id,
   label,
   type = 'text',
@@ -21,7 +20,7 @@ const InputField: React.FC<InputFieldProps> = ({
   onChange,
   placeholder,
   required = false,
-}) => {
+}, ref) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isPasswordField = type === 'password';
 
@@ -36,6 +35,7 @@ const InputField: React.FC<InputFieldProps> = ({
       </label>
       <div className="relative">
         <input
+          ref={ref}
           id={id}
           type={isPasswordField ? (isPasswordVisible ? 'text' : 'password') : type}
           value={value}
@@ -56,6 +56,8 @@ const InputField: React.FC<InputFieldProps> = ({
       </div>
     </div>
   );
-};
+});
+
+InputField.displayName = 'InputField';
 
 export default InputField;

@@ -42,14 +42,14 @@ const App: React.FC = () => {
       case Page.Login:
       case Page.Register:
       case Page.ForgotPassword:
-        return <AuthPage initialPage={currentPage} onLoginSuccess={handleLoginSuccess} navigate={navigate} />;
+        return <AuthPage initialPage={currentPage} onLoginSuccess={handleLoginSuccess} navigate={navigate} user={user} onLogout={handleLogout} />;
       case Page.Application:
         if (user) {
           return <ApplicationFormPage user={user} onLogout={handleLogout} navigateBack={() => navigate(Page.Landing)} />;
         }
         // If user is null but page is Application, redirect to Login
         setCurrentPage(Page.Login);
-        return <AuthPage initialPage={Page.Login} onLoginSuccess={handleLoginSuccess} navigate={navigate} />;
+        return <AuthPage initialPage={Page.Login} onLoginSuccess={handleLoginSuccess} navigate={navigate} user={user} onLogout={handleLogout} />;
       default:
         return <LandingPage navigate={navigate} user={user} onLogout={handleLogout}/>;
     }

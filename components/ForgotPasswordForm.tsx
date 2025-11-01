@@ -76,33 +76,36 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ navigate }) => 
 
   return (
     <div>
-      <h2 className="text-center text-2xl font-bold text-gray-800 mb-6">Quên mật khẩu</h2>
-      {message && <Alert type={messageType} message={message} onClose={() => setMessage('')} />}
-      
-      {step === 'enterEmail' && (
-        <form onSubmit={handleEmailSubmit}>
-          <InputField id="email" label="Email:" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Nhập email của bạn" required />
-          <button type="submit" disabled={loading} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md disabled:bg-green-300">
-            {loading ? 'Đang kiểm tra...' : 'Gửi yêu cầu'}
-          </button>
-        </form>
-      )}
-
-      {step === 'enterOtp' && (
-        <form onSubmit={handleOtpSubmit}>
-            <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">Email:</label>
-                <input value={email} disabled className="shadow-sm bg-gray-100 appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight" />
-            </div>
-            <InputField id="otp" label="Nhập mã OTP:" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Mã OTP..." required />
-            <button type="submit" className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md">
-                Xác nhận OTP
+      <div className="bg-green-600 text-white text-center py-4">
+        <h2 className="text-2xl font-bold">Quên mật khẩu</h2>
+      </div>
+      <div className="p-8">
+        {message && <Alert type={messageType} message={message} onClose={() => setMessage('')} />}
+        
+        {step === 'enterEmail' && (
+          <form onSubmit={handleEmailSubmit}>
+            <InputField id="email" label="Email:" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Nhập email của bạn" required />
+            <button type="submit" disabled={loading} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md disabled:bg-green-300">
+              {loading ? 'Đang kiểm tra...' : 'Gửi yêu cầu'}
             </button>
-        </form>
-      )}
+          </form>
+        )}
 
-      {step === 'resetPassword' && (
-        <form onSubmit={handlePasswordResetSubmit}>
+        {step === 'enterOtp' && (
+          <form onSubmit={handleOtpSubmit}>
+              <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                  <input value={email} disabled className="shadow-sm bg-gray-100 appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight" />
+              </div>
+              <InputField id="otp" label="Nhập mã OTP:" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Mã OTP..." required />
+              <button type="submit" className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md">
+                  Xác nhận OTP
+              </button>
+          </form>
+        )}
+
+        {step === 'resetPassword' && (
+          <form onSubmit={handlePasswordResetSubmit}>
              <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2">Email:</label>
                 <input value={email} disabled className="shadow-sm bg-gray-100 appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight" />
@@ -113,13 +116,14 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ navigate }) => 
                 {loading ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
             </button>
         </form>
-      )}
+        )}
 
-      <p className="text-center mt-4 text-sm text-gray-600">
-        <a href="#" onClick={(e) => { e.preventDefault(); navigate(Page.Login); }} className="font-medium text-blue-600 hover:underline">
-          Quay lại Đăng nhập
-        </a>
-      </p>
+        <p className="text-center mt-4 text-sm text-gray-600">
+          <a href="#" onClick={(e) => { e.preventDefault(); navigate(Page.Login); }} className="font-medium text-sky-600 hover:underline">
+            Quay lại Đăng nhập
+          </a>
+        </p>
+      </div>
     </div>
   );
 };

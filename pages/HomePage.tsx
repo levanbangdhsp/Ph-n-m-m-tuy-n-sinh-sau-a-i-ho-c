@@ -37,7 +37,7 @@ const FeatureCard: React.FC<{
     {actionText && onAction && (
       <button
         onClick={onAction}
-        className="mt-auto w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+        className="mt-auto w-full bg-sky-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-sky-700 transition-colors"
       >
         {actionText}
       </button>
@@ -51,7 +51,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, onLogout, navigate }) => {
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow-md">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-blue-800">Cổng thông tin tuyển sinh</h1>
+          <h1 className="text-2xl font-bold text-sky-800">Cổng thông tin tuyển sinh</h1>
           <div className="flex items-center gap-4">
             <span className="text-gray-700 hidden sm:block">Chào mừng, <span className="font-semibold">{user.fullName}</span>!</span>
             <button
@@ -66,7 +66,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, onLogout, navigate }) => {
       <main className="container mx-auto p-6 lg:p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard 
-                icon={<UserCircleIcon className="w-10 h-10 text-blue-600" />}
+                icon={<UserCircleIcon className="w-10 h-10 text-sky-600" />}
                 title="Hồ sơ của bạn"
                 description="Xem, chỉnh sửa và cập nhật thông tin hồ sơ dự tuyển của bạn."
                 actionText="Cập nhật hồ sơ"
