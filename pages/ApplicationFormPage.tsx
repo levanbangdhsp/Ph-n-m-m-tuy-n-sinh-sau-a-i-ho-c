@@ -50,6 +50,9 @@ const applicationFormSchema = {
     },
 };
 
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrgsiRzWbM42ctjT-DMOnx4y0cwwOCaSGql_trkfbRBrzlHLjdj03i8Ykj5ZtHyaD4/exec';
+
+
 const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogout, navigateBack }) => {
   const initialFormState: ApplicationFormData = {
     fullName: user.fullName,
@@ -91,6 +94,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   const [formData, setFormData] = useState<ApplicationFormData>(initialFormState);
   const [aiInputText, setAiInputText] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
   const [aiMessageType, setAiMessageType] = useState<'success' | 'error'>('error');
 
@@ -157,10 +161,41 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form data submitted:', formData);
-    alert('Thông tin đã được lưu thành công!');
+    setIsSubmitting(true);
+    
+    const payload = {
+        action: 'submitApplication',
+        sheetName: 'DataDangky',
+        ...formData
+    };
+
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload),
+            redirect: 'follow',
+        });
+
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('Thông tin đã được lưu thành công!');
+        } else {
+            alert(`Lưu thông tin thất bại: ${result.message || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Application submission error:', error);
+        alert('Đã có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.');
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
   const handlePrint = () => {
@@ -298,8 +333,8 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
             <button type="button" onClick={navigateBack} className="px-6 py-2 bg-gray-500 text-white font-semibold rounded-md hover:bg-gray-600 transition-colors">
               Về Trang chủ
             </button>
-            <button type="submit" className="px-6 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors">
-              Lưu thông tin
+            <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors disabled:bg-green-300">
+              {isSubmitting ? 'Đang lưu...' : 'Lưu thông tin'}
             </button>
             <button type="button" onClick={handlePrint} className="px-6 py-2 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700 transition-colors">
               In thông tin

@@ -63,7 +63,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ navigate, user, onLogout }) =
                     <p 
                       className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto"
                     >
-                      Nền tảng toàn diện để quản lý hồ sơ, theo dõi tiến độ và nhận kết quả tuyển sinh <br/> một cách nhanh chóng và minh bạch.
+                      Đừng bỏ lỡ cơ hội nâng cao trình độ học vấn của bạn. Đăng ký ngay hôm nay <br/> để trở thành một phần của cộng đồng chúng tôi.
                     </p>
                   </div>
                    <div className="p-8 bg-sky-50/70 rounded-lg">

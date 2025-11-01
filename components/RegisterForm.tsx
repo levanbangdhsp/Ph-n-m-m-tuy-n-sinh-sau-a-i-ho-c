@@ -41,6 +41,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigate }) => {
     setMessage('');
     
     const validationErrorMsg = "Vui lòng điền thông tin đầy đủ vào ô này.";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10,}$/;
 
     if (!fullName.trim()) {
         setMessage(validationErrorMsg);
@@ -54,20 +56,32 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigate }) => {
         emailRef.current?.focus();
         return;
     }
+    if (!emailRegex.test(email)) {
+        setMessage("Định dạng email không hợp lệ. Vui lòng kiểm tra lại.");
+        setMessageType('error');
+        emailRef.current?.focus();
+        return;
+    }
     if (!password.trim()) {
         setMessage(validationErrorMsg);
         setMessageType('error');
         passwordRef.current?.focus();
         return;
     }
-     if (!confirmPassword.trim()) {
+    if (!confirmPassword.trim()) {
         setMessage(validationErrorMsg);
         setMessageType('error');
         confirmPasswordRef.current?.focus();
         return;
     }
-     if (!phone.trim()) {
+    if (!phone.trim()) {
         setMessage(validationErrorMsg);
+        setMessageType('error');
+        phoneRef.current?.focus();
+        return;
+    }
+    if (!phoneRegex.test(phone.trim())) {
+        setMessage("Số điện thoại không hợp lệ. Vui lòng chỉ nhập số và đảm bảo có ít nhất 10 chữ số.");
         setMessageType('error');
         phoneRef.current?.focus();
         return;
@@ -92,6 +106,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigate }) => {
     setMessage(result.message);
     setMessageType(result.success ? 'success' : 'error');
     if (result.success) {
+      setFullName('');
+      setEmail('');
+      setPhone('');
+      setPassword('');
+      setConfirmPassword('');
       setTimeout(() => navigate(Page.Login), 10000);
     }
   };
