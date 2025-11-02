@@ -26,6 +26,9 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), {
         method: 'POST',
         cache: 'no-cache',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify(payload),
       });
 
@@ -68,6 +71,9 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), {
         method: 'POST',
         cache: 'no-cache',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify(payload),
       });
 
@@ -104,6 +110,9 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), { 
         method: 'POST', 
         cache: 'no-cache',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify(payload), 
       });
       if (!response.ok) throw new Error('Network error');
@@ -124,6 +133,9 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), { 
         method: 'POST', 
         cache: 'no-cache',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify(payload), 
       });
       if (!response.ok) throw new Error('Network error');
@@ -144,6 +156,9 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), { 
         method: 'POST', 
         cache: 'no-cache',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify(payload), 
       });
       if (!response.ok) throw new Error('Network error');
