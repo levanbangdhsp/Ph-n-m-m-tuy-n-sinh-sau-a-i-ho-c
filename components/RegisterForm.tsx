@@ -42,7 +42,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigate }) => {
     
     const validationErrorMsg = "Vui lòng điền thông tin đầy đủ vào ô này.";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^\d{10,}$/;
+    const phoneRegex = /^\d{10}$/;
 
     if (!fullName.trim()) {
         setMessage(validationErrorMsg);
@@ -81,7 +81,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigate }) => {
         return;
     }
     if (!phoneRegex.test(phone.trim())) {
-        setMessage("Số điện thoại không hợp lệ. Vui lòng chỉ nhập số và đảm bảo có ít nhất 10 chữ số.");
+        setMessage("Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 chữ số.");
         setMessageType('error');
         phoneRef.current?.focus();
         return;

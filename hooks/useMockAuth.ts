@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { User } from '../types';
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyM8Tv6HFfGjMeRweutboOoz89Ex3HvCO2NN05J4W74M3vcuLp94bU8800cazcCPbTg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzC3eVx1nX2dW1i7Z45PqUNvTba0OgJay6sWkEPtX0YKAU-zu0LFY_hsKiJotHkbqhC/exec';
 
 export const useMockAuth = () => {
   const [loading, setLoading] = useState(false);
@@ -25,8 +25,11 @@ export const useMockAuth = () => {
     try {
       const response = await fetch(getUrlWithCacheBuster(), {
         method: 'POST',
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify(payload),
-        redirect: 'follow',
       });
 
       if (!response.ok) {
@@ -67,8 +70,11 @@ export const useMockAuth = () => {
     try {
       const response = await fetch(getUrlWithCacheBuster(), {
         method: 'POST',
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify(payload),
-        redirect: 'follow',
       });
 
       if (!response.ok) {
@@ -101,7 +107,14 @@ export const useMockAuth = () => {
     setLoading(true);
     const payload = { action: 'sendOtpRequest', email, sheetName: 'UserName' };
     try {
-      const response = await fetch(getUrlWithCacheBuster(), { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
+      const response = await fetch(getUrlWithCacheBuster(), { 
+        method: 'POST', 
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(payload), 
+      });
       if (!response.ok) throw new Error('Network error');
       const result = await response.json();
       return { success: result.success, message: result.message || 'Lỗi không xác định' };
@@ -117,7 +130,14 @@ export const useMockAuth = () => {
     setLoading(true);
     const payload = { action: 'verifyOtp', email, otpEntered: otp, sheetName: 'UserName' };
     try {
-      const response = await fetch(getUrlWithCacheBuster(), { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
+      const response = await fetch(getUrlWithCacheBuster(), { 
+        method: 'POST', 
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(payload), 
+      });
       if (!response.ok) throw new Error('Network error');
       const result = await response.json();
       return { success: result.success, message: result.message || 'Lỗi không xác định' };
@@ -133,7 +153,14 @@ export const useMockAuth = () => {
     setLoading(true);
     const payload = { action: 'resetPassword', email, otpEntered: otp, newPassword, sheetName: 'UserName' };
     try {
-      const response = await fetch(getUrlWithCacheBuster(), { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
+      const response = await fetch(getUrlWithCacheBuster(), { 
+        method: 'POST', 
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(payload), 
+      });
       if (!response.ok) throw new Error('Network error');
       const result = await response.json();
        if (result.success) {

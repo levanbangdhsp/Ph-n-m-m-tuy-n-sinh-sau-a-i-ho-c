@@ -48,45 +48,54 @@ const LandingPage: React.FC<LandingPageProps> = ({ navigate, user, onLogout }) =
     >
       <Header user={user} onLogout={onLogout} navigate={navigate} />
       
-      <main className="flex-grow container mx-auto px-4 py-8 md:py-16 flex items-center">
-        {/* Conditional Content based on Login State */}
-        <div className="max-w-5xl mx-auto w-full">
-            {!user ? (
-                // Content for Logged-out users
-                <>
-                  <div className="text-center mb-12">
-                    <h1 
-                      className="text-4xl md:text-5xl font-extrabold text-slate-800 mb-4 leading-tight uppercase"
-                    >
-                      Cổng Thông Tin Tuyển Sinh Sau Đại Học
-                    </h1>
-                    <p 
-                      className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto"
-                    >
-                      Đừng bỏ lỡ cơ hội nâng cao trình độ học vấn của bạn. Đăng ký ngay hôm nay <br/> để trở thành một phần của cộng đồng chúng tôi.
-                    </p>
-                  </div>
-                   <div className="p-8 bg-sky-50/70 rounded-lg">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          <ActionCard
-                              icon={<UserCircleIcon className="w-12 h-12" />}
-                              title="Đăng nhập tài khoản"
-                              description="Truy cập hồ sơ của bạn và tiếp tục quá trình đăng ký."
-                              buttonText="Đăng nhập"
-                              onButtonClick={() => navigate(Page.Login)}
-                          />
-                          <ActionCard
-                              icon={<AcademicCapIcon className="w-12 h-12" />}
-                              title="Tạo tài khoản mới"
-                              description="Đăng ký tài khoản để bắt đầu nộp hồ sơ dự tuyển ngay hôm nay."
-                              buttonText="Đăng ký ngay"
-                              onButtonClick={() => navigate(Page.Register)}
-                          />
-                      </div>
-                  </div>
-                </>
-            ) : (
-                // Content for Logged-in users
+      <main className="flex-grow">
+        {!user ? (
+          // Content for Logged-out users
+          <>
+            {/* Banner Section */}
+            <div className="bg-sky-700 py-12 text-center">
+              <div className="container mx-auto px-4">
+                <h1 
+                  className="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight"
+                >
+                  CỔNG THÔNG TIN TUYỂN SINH SAU ĐẠI HỌC
+                </h1>
+                <p 
+                  className="text-lg md:text-xl text-sky-100 max-w-3xl mx-auto"
+                >
+                  Đừng bỏ lỡ cơ hội nâng cao trình độ học vấn của bạn. Đăng ký ngay hôm nay <br/> để trở thành một phần của cộng đồng chúng tôi.
+                </p>
+              </div>
+            </div>
+
+            {/* Action Cards Section */}
+            <div className="bg-white py-16">
+              <div className="container mx-auto px-4">
+                <div className="max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <ActionCard
+                            icon={<UserCircleIcon className="w-12 h-12" />}
+                            title="Đăng nhập tài khoản"
+                            description="Truy cập hồ sơ của bạn và tiếp tục quá trình đăng ký."
+                            buttonText="Đăng nhập"
+                            onButtonClick={() => navigate(Page.Login)}
+                        />
+                        <ActionCard
+                            icon={<AcademicCapIcon className="w-12 h-12" />}
+                            title="Tạo tài khoản mới"
+                            description="Đăng ký tài khoản để bắt đầu nộp hồ sơ dự tuyển ngay hôm nay."
+                            buttonText="Đăng ký ngay"
+                            onButtonClick={() => navigate(Page.Register)}
+                        />
+                    </div>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          // Content for Logged-in users
+          <div className="container mx-auto px-4 py-8 md:py-16 flex items-center">
+             <div className="max-w-5xl mx-auto w-full">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <ActionCard 
                         icon={<UserCircleIcon className="w-12 h-12 text-sky-600" />}
@@ -114,8 +123,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ navigate, user, onLogout }) =
                         statusColor="text-gray-500"
                     />
                 </div>
-            )}
-        </div>
+            </div>
+          </div>
+        )}
       </main>
 
       <Footer />

@@ -8,3 +8,4 @@ export const DEGREE_CLASSIFICATIONS = ['Xuất sắc', 'Giỏi', 'Khá', 'Trung 
 export const GRADUATION_SYSTEMS = ['Chính quy', 'Tại chức', 'Từ xa', 'Liên thông'];
 export const LANGUAGES = ['Tiếng Anh', 'Tiếng Pháp', 'Tiếng Trung', 'Tiếng Nhật'];
 export const LANGUAGE_CERT_TYPES = ['IELTS', 'TOEFL', 'TOEIC', 'DELF/DALF', 'HSK', 'JLPT'];
+export const TRAINING_FACILITIES = ['Tp.HCM', 'Long An', 'Gia Lai'];

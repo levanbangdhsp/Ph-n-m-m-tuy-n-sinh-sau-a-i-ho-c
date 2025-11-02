@@ -34,8 +34,10 @@ export interface ApplicationFormData {
   trainingFacility: string;
   firstChoiceMajor: string;
   secondChoiceMajor: string;
+  thirdChoiceMajor: string;
   firstChoiceOrientation: 'research' | 'applied' | '';
   secondChoiceOrientation: 'research' | 'applied' | '';
+  thirdChoiceOrientation: 'research' | 'applied' | '';
 
   // Section III
   university: string;
