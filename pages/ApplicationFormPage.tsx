@@ -50,7 +50,7 @@ const applicationFormSchema = {
     },
 };
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrgsiRzWbM42ctjT-DMOnx4y0cwwOCaSGql_trkfbRBrzlHLjdj03i8Ykj5ZtHyaD4/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyM8Tv6HFfGjMeRweutboOoz89Ex3HvCO2NN05J4W74M3vcuLp94bU8800cazcCPbTg/exec';
 
 
 const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogout, navigateBack }) => {

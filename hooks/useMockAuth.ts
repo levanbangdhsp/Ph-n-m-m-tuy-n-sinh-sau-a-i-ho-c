@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { User } from '../types';
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrgsiRzWbM42ctjT-DMOnx4y0cwwOCaSGql_trkfbRBrzlHLjdj03i8Ykj5ZtHyaD4/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyM8Tv6HFfGjMeRweutboOoz89Ex3HvCO2NN05J4W74M3vcuLp94bU8800cazcCPbTg/exec';
 
 export const useMockAuth = () => {
   const [loading, setLoading] = useState(false);
+
+  // Helper to create a cache-busting URL
+  const getUrlWithCacheBuster = () => {
+    return `${SCRIPT_URL}?v=${new Date().getTime()}`;
+  };
 
   const register = async (fullName: string, email: string, phone: string, password: string): Promise<{ success: boolean; message: string }> => {
     setLoading(true);
@@ -18,9 +23,8 @@ export const useMockAuth = () => {
     };
 
     try {
-      const response = await fetch(SCRIPT_URL, {
+      const response = await fetch(getUrlWithCacheBuster(), {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload),
         redirect: 'follow',
       });
@@ -34,9 +38,8 @@ export const useMockAuth = () => {
       if (result.status === 'success') {
         return { success: true, message: 'Đăng ký thành công, bạn vui lòng đăng nhập!!!' };
       } else {
-        // Handle specific error for existing email as requested by user
         if (result.message && result.message.toLowerCase().includes('email exists')) {
-          return { success: false, message: "Email này đã được đăng ký trong hệ thống. Bạn có thể vào trang Đăng nhập và bấm vào Quên mật khẩu để lấy lại mật khẩu, hoặc đăng ký tài khoản mới bằng email khác!" };
+          return { success: false, message: "Email này đã được đăng ký trong hệ thống. Bạn có thể vào trang Đăng nhâp và bấm vào Quên mật khẩu để lấy lại mật khẩu, hoặc đăng ký tài khoản mới bằng email khác!" };
         }
         return { success: false, message: result.message || 'Đăng ký thất bại. Vui lòng thử lại.' };
       }
@@ -62,11 +65,8 @@ export const useMockAuth = () => {
     };
 
     try {
-      const response = await fetch(SCRIPT_URL, {
+      const response = await fetch(getUrlWithCacheBuster(), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
         body: JSON.stringify(payload),
         redirect: 'follow',
       });
@@ -83,7 +83,7 @@ export const useMockAuth = () => {
           fullName: result.data.fullName || '',
           email: result.data.email,
           phone: result.data.phone || '',
-          passwordHash: '', // Password hash is not needed as auth is handled by Google Sheet
+          passwordHash: '',
         };
         return { success: true, message: 'Đăng nhập thành công!', user };
       } else {
@@ -97,65 +97,57 @@ export const useMockAuth = () => {
     }
   };
 
-  const checkEmailExists = async (email: string): Promise<{ exists: boolean; message: string }> => {
-     setLoading(true);
-     const payload = {
-        action: 'checkEmailExists',
-        email,
-        sheetName: 'UserName'
-     };
-     try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload),
-            redirect: 'follow',
-        });
-        if (!response.ok) throw new Error('Network response was not ok');
-        const result = await response.json();
-        if (result.exists) {
-            return { exists: true, message: 'Đã gửi mã OTP. Vui lòng kiểm tra email của bạn.' };
-        } else {
-            return { exists: false, message: 'Email không tồn tại trong hệ thống.' };
-        }
-     } catch (error) {
-        console.error('Check email exists error:', error);
-        return { exists: false, message: 'Đã xảy ra lỗi kết nối. Vui lòng thử lại.' };
-     } finally {
-        setLoading(false);
-     }
+  const requestOtp = async (email: string): Promise<{ success: boolean; message: string }> => {
+    setLoading(true);
+    const payload = { action: 'sendOtpRequest', email, sheetName: 'UserName' };
+    try {
+      const response = await fetch(getUrlWithCacheBuster(), { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
+      if (!response.ok) throw new Error('Network error');
+      const result = await response.json();
+      return { success: result.success, message: result.message || 'Lỗi không xác định' };
+    } catch (error) {
+      console.error('Request OTP error:', error);
+      return { success: false, message: 'Lỗi kết nối khi gửi yêu cầu OTP.' };
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updatePassword = async (email: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
+  const verifyOtp = async (email: string, otp: string): Promise<{ success: boolean; message: string }> => {
     setLoading(true);
-    const payload = {
-        action: 'updatePassword',
-        email,
-        password: newPassword,
-        sheetName: 'UserName'
-    };
+    const payload = { action: 'verifyOtp', email, otpEntered: otp, sheetName: 'UserName' };
     try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload),
-            redirect: 'follow',
-        });
-        if (!response.ok) throw new Error('Network response was not ok');
-        const result = await response.json();
-        if (result.status === 'success') {
-            return { success: true, message: 'Cập nhật mật khẩu thành công. Vui lòng đăng nhập lại.' };
-        } else {
-            return { success: false, message: result.message || 'Đã xảy ra lỗi. Vui lòng thử lại.' };
-        }
+      const response = await fetch(getUrlWithCacheBuster(), { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
+      if (!response.ok) throw new Error('Network error');
+      const result = await response.json();
+      return { success: result.success, message: result.message || 'Lỗi không xác định' };
     } catch (error) {
-        console.error('Update password error:', error);
-        return { success: false, message: 'Đã xảy ra lỗi kết nối. Vui lòng thử lại.' };
+      console.error('Verify OTP error:', error);
+      return { success: false, message: 'Lỗi kết nối khi xác thực OTP.' };
     } finally {
-        setLoading(false);
+      setLoading(false);
+    }
+  };
+  
+  const resetPassword = async (email: string, otp: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
+    setLoading(true);
+    const payload = { action: 'resetPassword', email, otpEntered: otp, newPassword, sheetName: 'UserName' };
+    try {
+      const response = await fetch(getUrlWithCacheBuster(), { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
+      if (!response.ok) throw new Error('Network error');
+      const result = await response.json();
+       if (result.success) {
+        return { success: true, message: 'Cập nhật mật khẩu thành công! Vui lòng đăng nhập lại.' };
+      }
+      return { success: result.success, message: result.message || 'Lỗi không xác định' };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return { success: false, message: 'Lỗi kết nối khi đặt lại mật khẩu.' };
+    } finally {
+      setLoading(false);
     }
   };
 
 
-  return { register, login, checkEmailExists, updatePassword, loading };
+  return { register, login, requestOtp, verifyOtp, resetPassword, loading };
 };

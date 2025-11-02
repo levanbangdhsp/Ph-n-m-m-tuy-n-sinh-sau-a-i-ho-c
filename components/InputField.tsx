@@ -10,6 +10,8 @@ interface InputFieldProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   required?: boolean;
+  // Fix: Add disabled prop to allow disabling the input field.
+  disabled?: boolean;
 }
 
 const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
@@ -20,6 +22,7 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
   onChange,
   placeholder,
   required = false,
+  disabled = false,
 }, ref) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isPasswordField = type === 'password';
@@ -42,13 +45,15 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
           onChange={onChange}
           placeholder={placeholder}
           required={required}
-          className="shadow-sm appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+          disabled={disabled}
+          className="shadow-sm appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
         {isPasswordField && (
           <button
             type="button"
             onClick={togglePasswordVisibility}
             className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+            disabled={disabled}
           >
             {isPasswordVisible ? <EyeSlashIcon className="h-5 w-5 text-gray-500" /> : <EyeIcon className="h-5 w-5 text-gray-500" />}
           </button>
