@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { User, ApplicationFormData } from '../types';
@@ -5,7 +6,7 @@ import RadioGroup from '../components/RadioGroup';
 import TextAreaField from '../components/TextAreaField';
 import SparklesIcon from '../components/icons/SparklesIcon';
 import Alert from '../components/Alert';
-import { NATIONALITIES, GENDERS, MAJORS, DEGREE_CLASSIFICATIONS, GRADUATION_SYSTEMS, LANGUAGES, LANGUAGE_CERT_TYPES, TRAINING_FACILITIES, CITIES, ETHNICITIES } from '../constants';
+import { NATIONALITIES, GENDERS, MAJORS, DEGREE_CLASSIFICATIONS, GRADUATION_SYSTEMS, LANGUAGES, LANGUAGE_CERT_TYPES, TRAINING_FACILITIES, CITIES, ETHNICITIES, PRIORITY_CATEGORIES, SCHOLARSHIP_POLICIES, BONUS_POINTS_CATEGORIES } from '../constants';
 
 interface ApplicationFormPageProps {
   user: User;
@@ -94,6 +95,33 @@ const keyToHeaderMap: { [key: string]: string } = {
 
 const headerToKeyMap: { [key: string]: string } = Object.entries(keyToHeaderMap).reduce((acc, [key, value]) => ({ ...acc, [value]: key }), {});
 
+const createReverseMap = (options: {label: string, value: string}[]) => {
+    const map: Record<string, string> = {};
+    options.forEach(option => {
+        // Map label to value for backward compatibility with old sheet data
+        map[option.label] = option.value;
+    });
+    return map;
+};
+
+const degreeReverseMap = createReverseMap(DEGREE_CLASSIFICATIONS);
+const graduationSystemReverseMap = createReverseMap(GRADUATION_SYSTEMS);
+const languageReverseMap = createReverseMap(LANGUAGES);
+const languageCertTypeReverseMap = createReverseMap(LANGUAGE_CERT_TYPES);
+const priorityCategoryReverseMap = createReverseMap(PRIORITY_CATEGORIES);
+const scholarshipReverseMap = createReverseMap(SCHOLARSHIP_POLICIES);
+const bonusPointsReverseMap = createReverseMap(BONUS_POINTS_CATEGORIES);
+
+// Add legacy code support specifically for scholarships
+scholarshipReverseMap['0'] = 'Không';
+scholarshipReverseMap['M100'] = 'Miễn 100%';
+scholarshipReverseMap['G75'] = 'Giảm 75%';
+scholarshipReverseMap['G50'] = 'Giảm 50%';
+
+// Add legacy support for bonus points
+bonusPointsReverseMap['Không'] = 'NCKH0';
+
+
 const mapOrientationFromSheet = (value: string): 'research' | 'applied' | '' => {
     if (value === 'Nghiên cứu') return 'research';
     if (value === 'Ứng dụng') return 'applied';
@@ -156,8 +184,8 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     languageCertIssuer: '',
     languageScore: '',
     languageCertDate: '',
-    bonusPoints: 'Không',
-    priorityCategory: 'Không',
+    bonusPoints: 'NCKH0',
+    priorityCategory: '0',
     scholarshipPolicy: 'Không',
   };
 
@@ -183,23 +211,33 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   const languageScoreRef = useRef<HTMLInputElement>(null);
   
   // Custom SelectField with error display
-  const SelectField = ({ label, id, error, options, placeholder, disabled, ...props }: any) => (
-    <div>
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-        <select 
-            id={id} 
-            disabled={disabled}
-            {...props} 
-            className={`mt-1 block w-full px-3 py-2 bg-white border rounded-md shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'} ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-        >
-            {placeholder && <option value="">{placeholder}</option>}
-            {options.map((option: string) => (
-                <option key={option} value={option}>{option}</option>
-            ))}
-        </select>
-        {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
-  );
+    const SelectField = ({ label, id, error, options, placeholder, disabled, ...props }: any) => {
+    // Check if options is an array of objects with label and value properties
+    const isObjectOptions = Array.isArray(options) && options.length > 0 && typeof options[0] === 'object' && 'label' in options[0] && 'value' in options[0];
+
+    return (
+        <div>
+            <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            <select
+                id={id}
+                disabled={disabled}
+                {...props}
+                className={`mt-1 block w-full px-3 py-2 bg-white border rounded-md shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'} ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+            >
+                {placeholder && <option value="">{placeholder}</option>}
+                {isObjectOptions ?
+                    options.map((option: { label: string, value: string }) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                    )) :
+                    (Array.isArray(options) ? options.map((option: string) => (
+                        <option key={option} value={option}>{option}</option>
+                    )) : null)
+                }
+            </select>
+            {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+        </div>
+    );
+  };
 
   const getUrlWithCacheBuster = () => {
     return `${SCRIPT_URL}?v=${new Date().getTime()}`;
@@ -235,14 +273,34 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                 for (const header in sheetData) {
                     const key = headerToKeyMap[header];
                     if (key && sheetData[header] !== null && sheetData[header] !== undefined) {
-                        const value = sheetData[header];
-                        if (key.includes('Orientation')) {
-                            (newFormData as any)[key] = mapOrientationFromSheet(value);
+                        const rawValue = sheetData[header];
+                        let processedValue: string;
+    
+                        // Handle legacy full-text values from sheet by converting them to codes.
+                        // If it's already a code, the lookup will be falsy, and it will use the raw value.
+                        if (key === 'degreeClassification') {
+                            processedValue = degreeReverseMap[rawValue] || rawValue.toString();
+                        } else if (key === 'graduationSystem') {
+                            processedValue = graduationSystemReverseMap[rawValue] || rawValue.toString();
+                        } else if (key === 'language') {
+                            processedValue = languageReverseMap[rawValue] || rawValue.toString();
+                        } else if (key === 'languageCertType') {
+                            processedValue = languageCertTypeReverseMap[rawValue] || rawValue.toString();
+                        } else if (key === 'priorityCategory') {
+                            processedValue = priorityCategoryReverseMap[rawValue] || rawValue.toString();
+                        } else if (key === 'scholarshipPolicy') {
+                            processedValue = scholarshipReverseMap[rawValue] || rawValue.toString();
+                        } else if (key === 'bonusPoints') {
+                            processedValue = bonusPointsReverseMap[rawValue] || rawValue.toString();
+                        } else if (key.includes('Orientation')) {
+                            processedValue = mapOrientationFromSheet(rawValue.toString());
                         } else if (key === 'dob' || key === 'idCardIssueDate' || key === 'languageCertDate') {
-                            (newFormData as any)[key] = formatDateFromISO(value.toString());
+                            processedValue = formatDateFromISO(rawValue.toString());
                         } else {
-                            (newFormData as any)[key] = value.toString().startsWith("'") ? value.toString().substring(1) : value.toString();
+                            processedValue = rawValue.toString();
+                            processedValue = processedValue.startsWith("'") ? processedValue.substring(1) : processedValue;
                         }
+                        (newFormData as any)[key] = processedValue;
                     }
                 }
                 setFormData(newFormData);
@@ -698,9 +756,9 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
           </div>
           
           {/* Other sections */}
-           <InputField label="V. Thông tin về điểm thưởng (nếu có)" id="bonusPoints" name="bonusPoints" value={formData.bonusPoints} onChange={handleChange} />
-           <InputField label="VI. Thông tin về đối tượng ưu tiên (nếu có)" id="priorityCategory" name="priorityCategory" value={formData.priorityCategory} onChange={handleChange} />
-           <InputField label="VII. Chính sách học bổng (nếu có)" id="scholarshipPolicy" name="scholarshipPolicy" onChange={handleChange} />
+           <SelectField label="V. Thông tin về điểm thưởng (nếu có)" id="bonusPoints" name="bonusPoints" value={formData.bonusPoints} onChange={handleChange} options={BONUS_POINTS_CATEGORIES} />
+           <SelectField label="VI. Thông tin về đối tượng ưu tiên (nếu có)" id="priorityCategory" name="priorityCategory" value={formData.priorityCategory} onChange={handleChange} options={PRIORITY_CATEGORIES} />
+           <SelectField label="VII. Chính sách học bổng (nếu có)" id="scholarshipPolicy" name="scholarshipPolicy" value={formData.scholarshipPolicy} onChange={handleChange} options={SCHOLARSHIP_POLICIES} />
 
 
           {/* Action Buttons */}
