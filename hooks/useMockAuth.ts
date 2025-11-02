@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { User } from '../types';
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzC3eVx1nX2dW1i7Z45PqUNvTba0OgJay6sWkEPtX0YKAU-zu0LFY_hsKiJotHkbqhC/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7w4xs_00awOzkc5ZAOIxjcRIhy-dCeVB2wvysWzrHVVtJ4Am6jQ4rjC-cnhs0HRYs/exec';
 
 export const useMockAuth = () => {
   const [loading, setLoading] = useState(false);
@@ -26,9 +26,6 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), {
         method: 'POST',
         cache: 'no-cache',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
         body: JSON.stringify(payload),
       });
 
@@ -71,9 +68,6 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), {
         method: 'POST',
         cache: 'no-cache',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
         body: JSON.stringify(payload),
       });
 
@@ -110,9 +104,6 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), { 
         method: 'POST', 
         cache: 'no-cache',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
         body: JSON.stringify(payload), 
       });
       if (!response.ok) throw new Error('Network error');
@@ -133,9 +124,6 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), { 
         method: 'POST', 
         cache: 'no-cache',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
         body: JSON.stringify(payload), 
       });
       if (!response.ok) throw new Error('Network error');
@@ -156,9 +144,6 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), { 
         method: 'POST', 
         cache: 'no-cache',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
         body: JSON.stringify(payload), 
       });
       if (!response.ok) throw new Error('Network error');

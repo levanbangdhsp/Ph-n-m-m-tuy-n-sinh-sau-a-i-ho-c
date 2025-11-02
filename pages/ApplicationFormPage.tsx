@@ -1,12 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { User, ApplicationFormData } from '../types';
-import SelectField from '../components/SelectField';
 import RadioGroup from '../components/RadioGroup';
 import TextAreaField from '../components/TextAreaField';
 import SparklesIcon from '../components/icons/SparklesIcon';
 import Alert from '../components/Alert';
-import { CITIES, NATIONALITIES, ETHNICITIES, GENDERS, MAJORS, DEGREE_CLASSIFICATIONS, GRADUATION_SYSTEMS, LANGUAGES, LANGUAGE_CERT_TYPES, TRAINING_FACILITIES } from '../constants';
+import { NATIONALITIES, GENDERS, MAJORS, DEGREE_CLASSIFICATIONS, GRADUATION_SYSTEMS, LANGUAGES, LANGUAGE_CERT_TYPES, TRAINING_FACILITIES, CITIES, ETHNICITIES } from '../constants';
 
 interface ApplicationFormPageProps {
   user: User;
@@ -52,8 +51,75 @@ const applicationFormSchema = {
     },
 };
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzC3eVx1nX2dW1i7Z45PqUNvTba0OgJay6sWkEPtX0YKAU-zu0LFY_hsKiJotHkbqhC/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7w4xs_00awOzkc5ZAOIxjcRIhy-dCeVB2wvysWzrHVVtJ4Am6jQ4rjC-cnhs0HRYs/exec';
 
+const keyToHeaderMap: { [key: string]: string } = {
+    fullName: 'Họ và tên',
+    gender: 'Giới tính',
+    dob: 'Ngày sinh',
+    pob: 'Nơi sinh',
+    ethnicity: 'Dân tộc',
+    nationality: 'Quốc tịch',
+    idCardNumber: 'Số CCCD',
+    idCardIssueDate: 'Ngày cấp CCCD',
+    idCardIssuePlace: 'Nơi cấp CCCD',
+    phone: 'Số điện thoại',
+    email: 'Email',
+    contactAddress: 'Địa chỉ liên hệ',
+    workplace: 'Cơ quan công tác',
+    trainingFacility: 'Cơ sở đào tạo',
+    firstChoiceMajor: 'Nguyện vọng 1',
+    secondChoiceMajor: 'Nguyện vọng 2',
+    thirdChoiceMajor: 'Nguyện vọng 3',
+    firstChoiceOrientation: 'Định hướng NV1',
+    secondChoiceOrientation: 'Định hướng NV2',
+    thirdChoiceOrientation: 'Định hướng NV3',
+    university: 'Trường tốt nghiệp ĐH',
+    graduationYear: 'Năm TN',
+    gpa10: 'Điểm TB (hệ 10)',
+    gpa4: 'Điểm TB (hệ 4)',
+    graduationMajor: 'Ngành TN',
+    degreeClassification: 'Loại TN',
+    graduationSystem: 'Hệ TN',
+    supplementaryCert: 'Bổ sung kiến thức',
+    language: 'Ngoại ngữ',
+    languageCertType: 'Loại bằng NN',
+    languageCertIssuer: 'Trường cấp bằng NN',
+    languageScore: 'Điểm NN',
+    languageCertDate: 'Ngày cấp NN',
+    bonusPoints: 'Nghiên cứu khoa học',
+    priorityCategory: 'Ưu tiên',
+    scholarshipPolicy: 'Học bổng',
+};
+
+const headerToKeyMap: { [key: string]: string } = Object.entries(keyToHeaderMap).reduce((acc, [key, value]) => ({ ...acc, [value]: key }), {});
+
+const mapOrientationFromSheet = (value: string): 'research' | 'applied' | '' => {
+    if (value === 'Nghiên cứu') return 'research';
+    if (value === 'Ứng dụng') return 'applied';
+    return '';
+};
+
+const formatDateFromISO = (dateString: string): string => {
+  if (!dateString) return '';
+  // Check if it looks like an ISO string from the sheet
+  if (dateString.includes('T') && dateString.includes('Z')) {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) { // Invalid date
+        return dateString;
+      }
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+      const year = date.getUTCFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      return dateString; // Return original if parsing fails
+    }
+  }
+  // Assume it's already in the correct format or some other format we don't handle
+  return dateString;
+};
 
 const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogout, navigateBack }) => {
   const initialFormState: ApplicationFormData = {
@@ -84,7 +150,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     graduationMajor: '',
     degreeClassification: '',
     graduationSystem: '',
-    supplementaryCert: '',
+    supplementaryCert: 'Không',
     language: '',
     languageCertType: '',
     languageCertIssuer: '',
@@ -104,6 +170,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitMessageType, setSubmitMessageType] = useState<'success' | 'error'>('error');
   const [errors, setErrors] = useState<Partial<Record<keyof ApplicationFormData, string>>>({});
+  const [isFetchingData, setIsFetchingData] = useState(true);
 
   // Refs for focusing on validation error
   const dobRef = useRef<HTMLInputElement>(null);
@@ -111,6 +178,86 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   const idCardIssueDateRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const languageCertDateRef = useRef<HTMLInputElement>(null);
+  const gpa10Ref = useRef<HTMLInputElement>(null);
+  const gpa4Ref = useRef<HTMLInputElement>(null);
+  const languageScoreRef = useRef<HTMLInputElement>(null);
+  
+  // Custom SelectField with error display
+  const SelectField = ({ label, id, error, options, placeholder, disabled, ...props }: any) => (
+    <div>
+        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <select 
+            id={id} 
+            disabled={disabled}
+            {...props} 
+            className={`mt-1 block w-full px-3 py-2 bg-white border rounded-md shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'} ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+        >
+            {placeholder && <option value="">{placeholder}</option>}
+            {options.map((option: string) => (
+                <option key={option} value={option}>{option}</option>
+            ))}
+        </select>
+        {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+    </div>
+  );
+
+  const getUrlWithCacheBuster = () => {
+    return `${SCRIPT_URL}?v=${new Date().getTime()}`;
+  };
+
+  useEffect(() => {
+    const fetchApplicationData = async () => {
+        if (!user.email) return;
+
+        setIsFetchingData(true);
+        setSubmitMessage(''); 
+        try {
+            const payload = {
+                action: 'getApplicationData',
+                email: user.email,
+            };
+            const response = await fetch(getUrlWithCacheBuster(), {
+                method: 'POST',
+                cache: 'no-cache',
+                body: JSON.stringify(payload),
+            });
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const sheetData = result.data;
+                const newFormData = { ...initialFormState };
+
+                for (const header in sheetData) {
+                    const key = headerToKeyMap[header];
+                    if (key && sheetData[header] !== null && sheetData[header] !== undefined) {
+                        const value = sheetData[header];
+                        if (key.includes('Orientation')) {
+                            (newFormData as any)[key] = mapOrientationFromSheet(value);
+                        } else if (key === 'dob' || key === 'idCardIssueDate' || key === 'languageCertDate') {
+                            (newFormData as any)[key] = formatDateFromISO(value.toString());
+                        } else {
+                            (newFormData as any)[key] = value.toString().startsWith("'") ? value.toString().substring(1) : value.toString();
+                        }
+                    }
+                }
+                setFormData(newFormData);
+            }
+        } catch (error) {
+            console.error("Failed to fetch application data:", error);
+            setSubmitMessage('Không thể tải dữ liệu hồ sơ. Bạn có thể điền mới hoặc thử lại sau.');
+            setSubmitMessageType('error');
+        } finally {
+            setIsFetchingData(false);
+        }
+    };
+    
+    fetchApplicationData();
+  }, [user.email]);
 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -118,6 +265,16 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name as keyof ApplicationFormData]) {
       setErrors(prev => ({...prev, [name]: ''}));
+    }
+  };
+  
+  const handleNumericBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if ((name === 'gpa10' || name === 'gpa4' || name === 'languageScore') && value) {
+      const parsed = parseFloat(value.replace(',', '.')); // Replace comma for parsing
+      if (!isNaN(parsed)) {
+        setFormData(prev => ({ ...prev, [name]: parsed.toFixed(2) }));
+      }
     }
   };
 
@@ -179,21 +336,43 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     }
   };
 
-  // Helper to create a cache-busting URL
-  const getUrlWithCacheBuster = () => {
-    return `${SCRIPT_URL}?v=${new Date().getTime()}`;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitMessage('');
     setErrors({});
 
-    // --- VALIDATION ---
     const newErrors: Partial<Record<keyof ApplicationFormData, string>> = {};
     let firstErrorRef: React.RefObject<HTMLInputElement> | null = null;
     
+    // Major choices validation
+    const choices = [
+        { major: formData.firstChoiceMajor, orientation: formData.firstChoiceOrientation },
+        { major: formData.secondChoiceMajor, orientation: formData.secondChoiceOrientation },
+        { major: formData.thirdChoiceMajor, orientation: formData.thirdChoiceOrientation },
+    ];
+    const choiceStrings = choices.map(c => (c.major && c.orientation) ? `${c.major}-${c.orientation}` : null);
+    const seen = new Map<string, number>();
+    const duplicateIndices = new Set<number>();
+
+    choiceStrings.forEach((choice, index) => {
+        if (choice) {
+            if (seen.has(choice)) {
+                duplicateIndices.add(seen.get(choice)!);
+                duplicateIndices.add(index);
+            } else {
+                seen.set(choice, index);
+            }
+        }
+    });
+
+    if (duplicateIndices.size > 0) {
+        const errorMsg = 'Nguyện vọng và định hướng này không được trùng lặp.';
+        if (duplicateIndices.has(0)) newErrors.firstChoiceMajor = errorMsg;
+        if (duplicateIndices.has(1)) newErrors.secondChoiceMajor = errorMsg;
+        if (duplicateIndices.has(2)) newErrors.thirdChoiceMajor = errorMsg;
+    }
+
     const dateRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
     if (formData.dob && !dateRegex.test(formData.dob.trim())) {
         newErrors.dob = 'Định dạng ngày phải là DD/MM/YYYY.';
@@ -222,27 +401,75 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         if (!firstErrorRef) firstErrorRef = languageCertDateRef;
     }
 
+    const numericRegex = /^\d+(\.\d{1,2})?$/;
+    
+    if (formData.languageScore) {
+        if (formData.languageScore.includes(',')) {
+            newErrors.languageScore = 'Vui lòng dùng dấu chấm "." cho số thập phân, không dùng dấu phẩy ",".';
+            if (!firstErrorRef) firstErrorRef = languageScoreRef;
+        } else if (!numericRegex.test(formData.languageScore)) {
+            newErrors.languageScore = 'Điểm không hợp lệ. Dùng dấu "." và tối đa 2 chữ số thập phân.';
+            if (!firstErrorRef) firstErrorRef = languageScoreRef;
+        }
+    }
+
+    if (formData.gpa10) {
+        if (formData.gpa10.includes(',')) {
+             newErrors.gpa10 = 'Vui lòng dùng dấu chấm "." cho số thập phân, không dùng dấu phẩy ",".';
+             if (!firstErrorRef) firstErrorRef = gpa10Ref;
+        } else if (!numericRegex.test(formData.gpa10)) {
+            newErrors.gpa10 = 'Điểm không hợp lệ. Dùng dấu "." và tối đa 2 chữ số thập phân.';
+            if (!firstErrorRef) firstErrorRef = gpa10Ref;
+        } else {
+            const gpa10Value = parseFloat(formData.gpa10);
+            if (gpa10Value < 0 || gpa10Value > 10) {
+                newErrors.gpa10 = 'Điểm hệ 10 phải từ 0 đến 10.';
+                if (!firstErrorRef) firstErrorRef = gpa10Ref;
+            }
+        }
+    }
+
+    if (formData.gpa4) {
+        if (formData.gpa4.includes(',')) {
+             newErrors.gpa4 = 'Vui lòng dùng dấu chấm "." cho số thập phân, không dùng dấu phẩy ",".';
+             if (!firstErrorRef) firstErrorRef = gpa4Ref;
+        } else if (!numericRegex.test(formData.gpa4)) {
+            newErrors.gpa4 = 'Điểm không hợp lệ. Dùng dấu "." và tối đa 2 chữ số thập phân.';
+            if (!firstErrorRef) firstErrorRef = gpa4Ref;
+        } else {
+            const gpa4Value = parseFloat(formData.gpa4);
+            if (gpa4Value < 0 || gpa4Value > 4) {
+                newErrors.gpa4 = 'Điểm hệ 4 phải từ 0 đến 4.';
+                if (!firstErrorRef) firstErrorRef = gpa4Ref;
+            }
+        }
+    }
+
     if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
         setIsSubmitting(false);
         if (firstErrorRef?.current) {
             firstErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             firstErrorRef.current.focus();
+        } else {
+           window.scrollTo(0, 0); 
         }
         return;
     }
 
     // --- DATA FORMATTING ---
+    const now = new Date();
+    // Format to DD/MM/YYYY HH:mm:ss for consistent timestamping
+    const submissionTimestamp = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    
     const mapOrientation = (orientation: 'research' | 'applied' | '') => {
         if (orientation === 'research') return 'Nghiên cứu';
         if (orientation === 'applied') return 'Ứng dụng';
         return '';
     };
 
-    const sheetData = {
-        'ID': user.id,
-        'Email': user.email,
-        'Họ và tên': formData.fullName,
+    const sheetDataForUpdate = {
+        'Thời gian': `'${submissionTimestamp}`,
         'Số điện thoại': `'${formData.phone.trim()}`,
         'Giới tính': formData.gender,
         'Địa chỉ liên hệ': formData.contactAddress,
@@ -251,7 +478,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         'Nơi sinh': formData.pob,
         'Dân tộc': formData.ethnicity,
         'Quốc tịch': formData.nationality,
-        'Trường tốt nghiệp ĐH': formData.university,
+        'Trường tốt nghiệp ĐH': formData.university,
         'Năm TN': formData.graduationYear,
         'Điểm TB (hệ 10)': formData.gpa10,
         'Điểm TB (hệ 4)': formData.gpa4,
@@ -263,7 +490,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         'Trường cấp bằng NN': formData.languageCertIssuer,
         'Điểm NN': formData.languageScore,
         'Ngày cấp NN': formData.languageCertDate,
-        'Số CCCD': formData.idCardNumber,
+        'Số CCCD': `'${formData.idCardNumber.trim()}`,
         'Ngày cấp CCCD': formData.idCardIssueDate,
         'Nơi cấp CCCD': formData.idCardIssuePlace,
         'Ưu tiên': formData.priorityCategory,
@@ -283,14 +510,13 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         action: 'submitApplication',
         sheetName: 'DataDangky',
         email: user.email,
-        ...sheetData
+        ...sheetDataForUpdate
     };
 
     try {
         const response = await fetch(getUrlWithCacheBuster(), {
             method: 'POST',
             cache: 'no-cache',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload),
         });
 
@@ -309,7 +535,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         }
     } catch (error) {
         console.error('Application submission error:', error);
-        setSubmitMessage('Đã có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.');
+        setSubmitMessage('Đã có lỗi mạng xảy ra khi lưu thông tin (thường do CORS hoặc kết nối). Vui lòng kiểm tra lại đường truyền và thử lại.');
         setSubmitMessageType('error');
     } finally {
         setIsSubmitting(false);
@@ -323,7 +549,18 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50">
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+      <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md relative">
+        {isFetchingData && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+            <div className="flex items-center gap-3 text-lg text-gray-700">
+              <svg className="animate-spin h-6 w-6 text-sky-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Đang tải dữ liệu hồ sơ...</span>
+            </div>
+          </div>
+        )}
         
         <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 border-b pb-4">
           <div>
@@ -393,12 +630,12 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
           <div className="border-b pb-6">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">I. Thông tin người dự tuyển</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <InputField label="Họ và tên" id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} />
-              <SelectField label="Giới tính" id="gender" value={formData.gender} onChange={handleChange} options={GENDERS} placeholder="Chọn giới tính" />
+              <InputField label="Họ và tên" id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} disabled />
+              <SelectField label="Giới tính" id="gender" name="gender" value={formData.gender} onChange={handleChange} options={GENDERS} placeholder="Chọn giới tính" />
               <InputField ref={dobRef} label="Ngày sinh" id="dob" name="dob" type="text" placeholder="DD/MM/YYYY" value={formData.dob} onChange={handleChange} error={errors.dob} />
-              <SelectField label="Nơi sinh" id="pob" value={formData.pob} onChange={handleChange} options={CITIES} placeholder="Chọn nơi sinh"/>
-              <SelectField label="Dân tộc" id="ethnicity" value={formData.ethnicity} onChange={handleChange} options={ETHNICITIES} placeholder="Chọn dân tộc"/>
-              <SelectField label="Quốc tịch" id="nationality" value={formData.nationality} onChange={handleChange} options={NATIONALITIES} placeholder="Chọn quốc tịch"/>
+              <SelectField label="Nơi sinh" id="pob" name="pob" value={formData.pob} onChange={handleChange} options={CITIES} placeholder="Chọn nơi sinh" />
+              <SelectField label="Dân tộc" id="ethnicity" name="ethnicity" value={formData.ethnicity} onChange={handleChange} options={ETHNICITIES} placeholder="Chọn dân tộc" />
+              <SelectField label="Quốc tịch" id="nationality" name="nationality" value={formData.nationality} onChange={handleChange} options={NATIONALITIES} placeholder="Chọn quốc tịch"/>
               <InputField ref={idCardNumberRef} label="Số CCCD" id="idCardNumber" name="idCardNumber" value={formData.idCardNumber} onChange={handleChange} error={errors.idCardNumber} />
               <InputField ref={idCardIssueDateRef} label="Ngày cấp" id="idCardIssueDate" name="idCardIssueDate" type="text" placeholder="DD/MM/YYYY" value={formData.idCardIssueDate} onChange={handleChange} error={errors.idCardIssueDate} />
               <InputField label="Nơi cấp" id="idCardIssuePlace" name="idCardIssuePlace" value={formData.idCardIssuePlace} onChange={handleChange} />
@@ -417,13 +654,13 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
           <div className="border-b pb-6">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">II. Thông tin đăng ký dự tuyển</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <SelectField label="Cơ sở đào tạo" id="trainingFacility" value={formData.trainingFacility} onChange={handleChange} options={TRAINING_FACILITIES} placeholder="Chọn cơ sở" />
+                 <SelectField label="Cơ sở đào tạo" id="trainingFacility" name="trainingFacility" value={formData.trainingFacility} onChange={handleChange} options={TRAINING_FACILITIES} placeholder="Chọn cơ sở" />
                  <div></div>
-                 <SelectField label="Nguyện vọng 1" id="firstChoiceMajor" value={formData.firstChoiceMajor} onChange={handleChange} options={MAJORS} placeholder="Chọn ngành"/>
+                 <SelectField label="Nguyện vọng 1" id="firstChoiceMajor" name="firstChoiceMajor" value={formData.firstChoiceMajor} onChange={handleChange} options={MAJORS} placeholder="Chọn ngành" error={errors.firstChoiceMajor} />
                  <RadioGroup label="Định hướng" name="firstChoiceOrientation" selectedValue={formData.firstChoiceOrientation} onChange={handleRadioChange} options={[{value: 'research', label: 'Nghiên cứu'}, {value: 'applied', label: 'Ứng dụng'}]} />
-                 <SelectField label="Nguyện vọng 2" id="secondChoiceMajor" value={formData.secondChoiceMajor} onChange={handleChange} options={MAJORS} placeholder="Chọn ngành"/>
+                 <SelectField label="Nguyện vọng 2" id="secondChoiceMajor" name="secondChoiceMajor" value={formData.secondChoiceMajor} onChange={handleChange} options={MAJORS} placeholder="Chọn ngành" error={errors.secondChoiceMajor} />
                  <RadioGroup label="Định hướng" name="secondChoiceOrientation" selectedValue={formData.secondChoiceOrientation} onChange={handleRadioChange} options={[{value: 'research', label: 'Nghiên cứu'}, {value: 'applied', label: 'Ứng dụng'}]} />
-                 <SelectField label="Nguyện vọng 3" id="thirdChoiceMajor" value={formData.thirdChoiceMajor} onChange={handleChange} options={MAJORS} placeholder="Chọn ngành"/>
+                 <SelectField label="Nguyện vọng 3" id="thirdChoiceMajor" name="thirdChoiceMajor" value={formData.thirdChoiceMajor} onChange={handleChange} options={MAJORS} placeholder="Chọn ngành" error={errors.thirdChoiceMajor} />
                  <RadioGroup label="Định hướng" name="thirdChoiceOrientation" selectedValue={formData.thirdChoiceOrientation} onChange={handleRadioChange} options={[{value: 'research', label: 'Nghiên cứu'}, {value: 'applied', label: 'Ứng dụng'}]} />
              </div>
           </div>
@@ -436,14 +673,14 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                   <InputField label="Trường tốt nghiệp đại học" id="university" name="university" value={formData.university} onChange={handleChange}/>
                 </div>
                  <InputField label="Năm tốt nghiệp" id="graduationYear" name="graduationYear" type="number" value={formData.graduationYear} onChange={handleChange}/>
-                 <InputField label="Điểm TB (hệ 10)" id="gpa10" name="gpa10" type="number" value={formData.gpa10} onChange={handleChange}/>
-                 <InputField label="Điểm TB (hệ 4)" id="gpa4" name="gpa4" type="number" value={formData.gpa4} onChange={handleChange}/>
+                 <InputField ref={gpa10Ref} label="Điểm TB (hệ 10)" id="gpa10" name="gpa10" type="text" value={formData.gpa10} onChange={handleChange} onBlur={handleNumericBlur} error={errors.gpa10} placeholder="Ví dụ: 8.50" />
+                 <InputField ref={gpa4Ref} label="Điểm TB (hệ 4)" id="gpa4" name="gpa4" type="text" value={formData.gpa4} onChange={handleChange} onBlur={handleNumericBlur} error={errors.gpa4} placeholder="Ví dụ: 3.20" />
                   <div className="lg:col-span-1"></div>
                  <InputField label="Ngành tốt nghiệp" id="graduationMajor" name="graduationMajor" value={formData.graduationMajor} onChange={handleChange}/>
-                 <SelectField label="Loại tốt nghiệp" id="degreeClassification" value={formData.degreeClassification} onChange={handleChange} options={DEGREE_CLASSIFICATIONS} placeholder="Chọn loại"/>
-                 <SelectField label="Hệ tốt nghiệp" id="graduationSystem" value={formData.graduationSystem} onChange={handleChange} options={GRADUATION_SYSTEMS} placeholder="Chọn hệ"/>
+                 <SelectField label="Loại tốt nghiệp" id="degreeClassification" name="degreeClassification" value={formData.degreeClassification} onChange={handleChange} options={DEGREE_CLASSIFICATIONS} placeholder="Chọn loại"/>
+                 <SelectField label="Hệ tốt nghiệp" id="graduationSystem" name="graduationSystem" value={formData.graduationSystem} onChange={handleChange} options={GRADUATION_SYSTEMS} placeholder="Chọn hệ"/>
                  <div className="lg:col-span-3">
-                    <InputField label="Giấy chứng nhận hoàn thành chương trình bổ sung kiến thức" id="supplementaryCert" name="supplementaryCert" value={formData.supplementaryCert} onChange={handleChange}/>
+                    <SelectField label="Giấy chứng nhận hoàn thành bổ sung kiến thức" id="supplementaryCert" name="supplementaryCert" value={formData.supplementaryCert} onChange={handleChange} options={['Có', 'Không']} placeholder="Chọn..." />
                  </div>
              </div>
           </div>
@@ -452,10 +689,10 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
           <div className="border-b pb-6">
              <h2 className="text-xl font-semibold text-gray-700 mb-4">IV. Thông tin về trình độ ngoại ngữ</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 <SelectField label="Ngoại ngữ" id="language" value={formData.language} onChange={handleChange} options={LANGUAGES} placeholder="Chọn ngoại ngữ"/>
-                 <SelectField label="Loại bằng/chứng chỉ" id="languageCertType" value={formData.languageCertType} onChange={handleChange} options={LANGUAGE_CERT_TYPES} placeholder="Chọn loại"/>
+                 <SelectField label="Ngoại ngữ" id="language" name="language" value={formData.language} onChange={handleChange} options={LANGUAGES} placeholder="Chọn ngoại ngữ"/>
+                 <SelectField label="Loại bằng/chứng chỉ" id="languageCertType" name="languageCertType" value={formData.languageCertType} onChange={handleChange} options={LANGUAGE_CERT_TYPES} placeholder="Chọn loại"/>
                  <InputField label="Nơi cấp" id="languageCertIssuer" name="languageCertIssuer" value={formData.languageCertIssuer} onChange={handleChange}/>
-                 <InputField label="Điểm ngoại ngữ" id="languageScore" name="languageScore" type="number" value={formData.languageScore} onChange={handleChange}/>
+                 <InputField ref={languageScoreRef} label="Điểm ngoại ngữ" id="languageScore" name="languageScore" type="text" value={formData.languageScore} onChange={handleChange} onBlur={handleNumericBlur} error={errors.languageScore} placeholder="Ví dụ: 6.50"/>
                  <InputField ref={languageCertDateRef} label="Ngày cấp" id="languageCertDate" name="languageCertDate" type="text" placeholder="DD/MM/YYYY" value={formData.languageCertDate} onChange={handleChange} error={errors.languageCertDate} />
              </div>
           </div>
@@ -463,7 +700,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
           {/* Other sections */}
            <InputField label="V. Thông tin về điểm thưởng (nếu có)" id="bonusPoints" name="bonusPoints" value={formData.bonusPoints} onChange={handleChange} />
            <InputField label="VI. Thông tin về đối tượng ưu tiên (nếu có)" id="priorityCategory" name="priorityCategory" value={formData.priorityCategory} onChange={handleChange} />
-           <InputField label="VII. Chính sách học bổng (nếu có)" id="scholarshipPolicy" name="scholarshipPolicy" value={formData.scholarshipPolicy} onChange={handleChange} />
+           <InputField label="VII. Chính sách học bổng (nếu có)" id="scholarshipPolicy" name="scholarshipPolicy" onChange={handleChange} />
 
 
           {/* Action Buttons */}
