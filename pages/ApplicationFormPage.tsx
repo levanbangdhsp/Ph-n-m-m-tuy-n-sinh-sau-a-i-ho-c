@@ -668,14 +668,14 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
 
     const numberToVietnameseWords = (numStr: string): string => {
         if (!numStr || typeof numStr !== 'string' || !numStr.trim()) return '';
-        numStr = numStr.replace(',', '.');
-        if (isNaN(parseFloat(numStr))) return '';
+        const sanitizedNumStr = numStr.replace(',', '.');
+        if (isNaN(parseFloat(sanitizedNumStr))) return '';
 
         const units = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
 
         const readTwoDigits = (twoDigits: string): string => {
             const num = parseInt(twoDigits, 10);
-            if (num === 0) return (twoDigits.length > 1) ? '' : units[0];
+            if (num === 0) return 'không';
             if (num < 10) return units[num];
             
             const ten = Math.floor(num / 10);
@@ -697,6 +697,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
 
         const readThreeDigits = (threeDigits: string): string => {
             const num = parseInt(threeDigits, 10);
+            if (num === 0 && threeDigits.length === 1) return 'không';
             if (num < 100) return readTwoDigits(String(num));
             
             const hundred = Math.floor(num / 100);
@@ -713,28 +714,23 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
             return str;
         };
 
-        const [integerPart, decimalPart] = numStr.split('.');
+        const [integerPart, decimalPart] = sanitizedNumStr.split('.');
         
         let integerWords = readThreeDigits(integerPart);
 
-        if (!decimalPart || parseInt(decimalPart.replace(/0+$/, ''), 10) === 0) {
+        if (decimalPart === undefined) {
             return integerWords;
         }
-        
+
         let decimalWords = '';
-        const cleanDecimalPart = decimalPart.replace(/0+$/, '');
-        if (cleanDecimalPart.length <= 2) {
-            if (cleanDecimalPart.length === 2 && cleanDecimalPart.startsWith('0')) {
-                 decimalWords = 'linh ' + units[parseInt(cleanDecimalPart[1])];
-            } else {
-                decimalWords = readTwoDigits(cleanDecimalPart);
+        for (const digit of decimalPart) {
+            const digitNum = parseInt(digit, 10);
+            if (!isNaN(digitNum) && digitNum >= 0 && digitNum <= 9) {
+                decimalWords += units[digitNum] + ' ';
             }
-        } else {
-            for (const digit of cleanDecimalPart) {
-                decimalWords += units[parseInt(digit, 10)] + ' ';
-            }
-            decimalWords = decimalWords.trim();
         }
+        
+        decimalWords = decimalWords.trim();
         
         return `${integerWords} chấm ${decimalWords}`;
     };
