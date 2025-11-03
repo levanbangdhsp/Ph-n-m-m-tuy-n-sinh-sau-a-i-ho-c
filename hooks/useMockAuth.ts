@@ -11,6 +11,16 @@ export const useMockAuth = () => {
     return `${SCRIPT_URL}?v=${new Date().getTime()}`;
   };
 
+  const processResponse = async (response: Response) => {
+    const textResult = await response.text();
+    try {
+      return JSON.parse(textResult);
+    } catch (e) {
+      // If parsing fails, it's not a valid JSON. Return it as an error message.
+      return { status: 'error', success: false, message: textResult || 'Lỗi không xác định từ máy chủ.' };
+    }
+  };
+
   const register = async (fullName: string, email: string, phone: string, password: string): Promise<{ success: boolean; message: string }> => {
     setLoading(true);
     const payload = {
@@ -36,13 +46,13 @@ export const useMockAuth = () => {
         throw new Error(`Network response was not ok: ${response.statusText}`);
       }
 
-      const result = await response.json();
+      const result = await processResponse(response);
 
       if (result.status === 'success') {
         return { success: true, message: 'Đăng ký thành công, bạn vui lòng đăng nhập!!!' };
       } else {
         if (result.message && result.message.toLowerCase().includes('email exists')) {
-          return { success: false, message: "Email này đã được đăng ký trong hệ thống. Bạn có thể vào trang Đăng nhâp và bấm vào Quên mật khẩu để lấy lại mật khẩu, hoặc đăng ký tài khoản mới bằng email khác!" };
+          return { success: false, message: "Email này đã được đăng ký trong hệ thống. Bạn có thể vào trang Đăng nhập và bấm vào Quên mật khẩu để lấy lại mật khẩu, hoặc đăng ký tài khoản mới bằng email khác!" };
         }
         return { success: false, message: result.message || 'Đăng ký thất bại. Vui lòng thử lại.' };
       }
@@ -81,7 +91,7 @@ export const useMockAuth = () => {
         throw new Error(`Network response was not ok: ${response.statusText}`);
       }
 
-      const result = await response.json();
+      const result = await processResponse(response);
       
       if (result.status === 'success' && result.data) {
         const user: User = {
@@ -116,7 +126,7 @@ export const useMockAuth = () => {
         body: JSON.stringify(payload), 
       });
       if (!response.ok) throw new Error('Network error');
-      const result = await response.json();
+      const result = await processResponse(response);
       return { success: result.success, message: result.message || 'Lỗi không xác định' };
     } catch (error) {
       console.error('Request OTP error:', error);
@@ -139,7 +149,7 @@ export const useMockAuth = () => {
         body: JSON.stringify(payload), 
       });
       if (!response.ok) throw new Error('Network error');
-      const result = await response.json();
+      const result = await processResponse(response);
       return { success: result.success, message: result.message || 'Lỗi không xác định' };
     } catch (error) {
       console.error('Verify OTP error:', error);
@@ -162,7 +172,7 @@ export const useMockAuth = () => {
         body: JSON.stringify(payload), 
       });
       if (!response.ok) throw new Error('Network error');
-      const result = await response.json();
+      const result = await processResponse(response);
        if (result.success) {
         return { success: true, message: 'Cập nhật mật khẩu thành công! Vui lòng đăng nhập lại.' };
       }

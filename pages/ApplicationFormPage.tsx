@@ -195,6 +195,16 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   const getUrlWithCacheBuster = () => {
     return `${SCRIPT_URL}?v=${new Date().getTime()}`;
   };
+
+  const processResponse = async (response: Response) => {
+    const textResult = await response.text();
+    try {
+      return JSON.parse(textResult);
+    } catch (e) {
+      // If parsing fails, it's not a valid JSON. Return it as an error message.
+      return { status: 'error', success: false, message: textResult || 'Lỗi không xác định từ máy chủ.' };
+    }
+  };
   
   const getOrientationOptionsForMajor = (majorCode: string, facility: string) => {
     if (!majorCode || !facility) return [];
@@ -237,7 +247,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                 throw new Error('Network response was not ok.');
             }
 
-            const result = await response.json();
+            const result = await processResponse(response);
 
             if (result.success && result.data) {
                 const sheetData = result.data;
@@ -606,7 +616,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
             method: 'POST',
             cache: 'no-cache',
             headers: {
-              'Content-Type': 'text/plain;charset=utf-8',
+                'Content-Type': 'text/plain;charset=utf-8',
             },
             body: JSON.stringify(payload),
         });
@@ -615,7 +625,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
         
-        const result = await response.json();
+        const result = await processResponse(response);
         
         if (result.status === 'success' || result.success) {
             setSubmitMessage('Thông tin đã được lưu thành công!');
@@ -951,6 +961,16 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     }
   };
 
+  const handleQrCodeClick = () => {
+    if (!formData.phone || !formData.fullName) {
+      alert('Vui lòng điền đầy đủ Họ và tên và Số điện thoại trong hồ sơ để tạo mã QR.');
+      return;
+    }
+    const noiDung = `XTSDH26 ${formData.phone.trim()} ${formData.fullName.trim()}`;
+    const url = `https://tracuu.hcmue.edu.vn/vietqr?bank=VCB&sotien=750000&noidung=${encodeURIComponent(noiDung)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
        <header className="bg-sky-100 text-slate-800 shadow-sm w-full sticky top-0 z-50 border-b border-sky-200">
@@ -1100,7 +1120,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                 <button type="button" onClick={handlePrint} className="px-6 py-2 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700 transition-colors">
                 In thông tin
                 </button>
-                <button type="button" onClick={() => alert('QR Code functionality to be implemented.')} className="px-6 py-2 bg-gray-800 text-white font-semibold rounded-md hover:bg-black transition-colors">
+                <button type="button" onClick={handleQrCodeClick} className="px-6 py-2 bg-gray-800 text-white font-semibold rounded-md hover:bg-black transition-colors">
                 QR Code lệ phí
                 </button>
             </div>
