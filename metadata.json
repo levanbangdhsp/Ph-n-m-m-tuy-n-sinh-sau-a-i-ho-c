@@ -1,5 +1,5 @@
 {
-  "name": "Postgraduate Admissions Portal",
-  "description": "A web application for postgraduate program admissions, allowing users to register, manage their account, and submit their application form.",
+  "name": "Cổng thông tin tuyển sinh sau đại học",
+  "description": "Một ứng dụng web dành cho việc tuyển sinh chương trình sau đại học, cho phép người dùng đăng ký, quản lý tài khoản và nộp hồ sơ dự tuyển.",
   "requestFramePermissions": []
 }
