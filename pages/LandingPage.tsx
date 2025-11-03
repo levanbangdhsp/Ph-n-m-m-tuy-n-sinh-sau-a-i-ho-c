@@ -53,7 +53,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ navigate, user, onLogout }) =
           // Content for Logged-out users
           <>
             {/* Banner Section */}
-            <div className="bg-sky-700 py-12 text-center">
+            <div className="bg-sky-500 py-12 text-center">
               <div className="container mx-auto px-4">
                 <h1 
                   className="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight"

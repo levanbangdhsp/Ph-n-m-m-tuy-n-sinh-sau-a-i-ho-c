@@ -10,7 +10,12 @@ const Footer: React.FC = () => {
             &copy; {new Date().getFullYear()} Cổng thông tin tuyển sinh Sau đại học Trường Đại học Sư phạm Thành phố Hồ Chí Minh. Bảo lưu mọi quyền.
           </p>
           <p className="text-sm mt-2">
-            Liên hệ hỗ trợ: <a href="mailto:support@university.edu" className="text-sky-600 hover:text-sky-700 hover:underline">support@university.edu</a> | Điện thoại: (123) 456-7890
+            <span>Liên hệ hỗ trợ: </span>
+            <a href="http://hcmue.edu.vn" target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:text-sky-700 hover:underline">Website: http://hcmue.edu.vn</a>
+            <span className="mx-1">|</span>
+            <a href="mailto:tuyensinhsdh@hcmue.edu.vn" className="text-sky-600 hover:text-sky-700 hover:underline">Email: tuyensinhsdh@hcmue.edu.vn</a>
+            <span className="mx-1">|</span>
+            <span>Điện thoại: 028.38391077, 028.38352020 - 184 (hoặc 183)</span>
           </p>
         </div>
       </div>

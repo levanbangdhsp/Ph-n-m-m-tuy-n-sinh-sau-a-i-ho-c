@@ -1,7 +1,38 @@
-
 export const GENDERS = ['Nam', 'Nữ', 'Khác'];
 export const NATIONALITIES = ['Việt Nam', 'Lào', 'Campuchia', 'Thái Lan', 'Trung Quốc', 'Nhật Bản', 'Hàn Quốc', 'Khác'];
-export const MAJORS = ['Khoa học máy tính', 'Quản trị kinh doanh', 'Luật', 'Ngôn ngữ Anh', 'Công nghệ sinh học'];
+
+export const MAJORS_DATA = [
+    { code: 'DAIS', name: 'Đại số và lý thuyết số', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'DLHO', name: 'Địa lý học', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'GDCT', name: 'Giáo dục học (Giáo dục chính trị)', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'GDHO', name: 'Giáo dục học', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'GDMN', name: 'Giáo dục học (Giáo dục mầm non)', availability: { 'Tp.HCM': ['research', 'applied'], 'Gia Lai': ['applied'] } },
+    { code: 'GDTC', name: 'Giáo dục học (Giáo dục thể chất)', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'GDTH', name: 'Giáo dục học (Giáo dục tiểu học)', availability: { 'Tp.HCM': ['research', 'applied'], 'Long An': ['applied'], 'Gia Lai': ['applied'] } },
+    { code: 'GITI', name: 'Toán giải tích', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'HHTP', name: 'Hình học và tôpô', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'HOHC', name: 'Hóa hữu cơ', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'HOVC', name: 'Hóa vô cơ', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'KHMT', name: 'Khoa học máy tính', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'LLVH', name: 'Lý luận văn học', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'LPTQ', name: 'Lý luận và phương pháp dạy học bộ môn tiếng Trung Quốc', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'LSTG', name: 'Lịch sử thế giới', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'LSVN', name: 'Lịch sử Việt Nam', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'NNHO', name: 'Ngôn ngữ học', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'PHAP', name: 'Lý luận và phương pháp dạy học bộ môn tiếng Pháp', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'PPHH', name: 'Lý luận và phương pháp dạy học bộ môn Hóa học', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'PPTA', name: 'Lý luận và phương pháp dạy học bộ môn tiếng Anh', availability: { 'Tp.HCM': ['applied'] } },
+    { code: 'PPVA', name: 'Lý luận và phương pháp dạy học bộ môn Ngữ văn', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'QLGD', name: 'Quản lý giáo dục', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'STHO', name: 'Sinh thái học', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'TALI', name: 'Tâm lý học', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'TOAN', name: 'Lý luận và phương pháp dạy học bộ môn Toán', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'VATL', name: 'Lý luận và phương pháp dạy học bộ môn Vật lý', availability: { 'Tp.HCM': ['research', 'applied'] } },
+    { code: 'VHNN', name: 'Văn học nước ngoài', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'VHVN', name: 'Văn học Việt Nam', availability: { 'Tp.HCM': ['research'] } },
+    { code: 'VLNT', name: 'Vật lý nguyên tử và hạt nhân', availability: { 'Tp.HCM': ['research'] } },
+];
+
 
 export const DEGREE_CLASSIFICATIONS = [
   { label: 'Xuất sắc', value: 'XS' },

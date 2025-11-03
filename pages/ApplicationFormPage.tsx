@@ -1,10 +1,8 @@
-
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, ApplicationFormData } from '../types';
 import RadioGroup from '../components/RadioGroup';
 import Alert from '../components/Alert';
-import { NATIONALITIES, GENDERS, MAJORS, DEGREE_CLASSIFICATIONS, GRADUATION_SYSTEMS, LANGUAGES, LANGUAGE_CERT_TYPES, TRAINING_FACILITIES, CITIES, ETHNICITIES, PRIORITY_CATEGORIES, SCHOLARSHIP_POLICIES, BONUS_POINTS_CATEGORIES } from '../constants';
+import { NATIONALITIES, GENDERS, MAJORS_DATA, DEGREE_CLASSIFICATIONS, GRADUATION_SYSTEMS, LANGUAGES, LANGUAGE_CERT_TYPES, TRAINING_FACILITIES, CITIES, ETHNICITIES, PRIORITY_CATEGORIES, SCHOLARSHIP_POLICIES, BONUS_POINTS_CATEGORIES } from '../constants';
 import AcademicCapIcon from '../components/icons/AcademicCapIcon';
 import Footer from '../components/Footer';
 
@@ -60,7 +58,6 @@ const headerToKeyMap: { [key: string]: string } = Object.entries(keyToHeaderMap)
 const createReverseMap = (options: {label: string, value: string}[]) => {
     const map: Record<string, string> = {};
     options.forEach(option => {
-        // Map label to value for backward compatibility with old sheet data
         map[option.label] = option.value;
     });
     return map;
@@ -74,13 +71,11 @@ const priorityCategoryReverseMap = createReverseMap(PRIORITY_CATEGORIES);
 const scholarshipReverseMap = createReverseMap(SCHOLARSHIP_POLICIES);
 const bonusPointsReverseMap = createReverseMap(BONUS_POINTS_CATEGORIES);
 
-// Add legacy code support specifically for scholarships
 scholarshipReverseMap['0'] = 'Không';
 scholarshipReverseMap['M100'] = 'Miễn 100%';
 scholarshipReverseMap['G75'] = 'Giảm 75%';
 scholarshipReverseMap['G50'] = 'Giảm 50%';
 
-// Add legacy support for bonus points
 bonusPointsReverseMap['Không'] = 'NCKH0';
 
 
@@ -92,22 +87,20 @@ const mapOrientationFromSheet = (value: string): 'research' | 'applied' | '' => 
 
 const formatDateFromISO = (dateString: string): string => {
   if (!dateString) return '';
-  // Check if it looks like an ISO string from the sheet
   if (dateString.includes('T') && dateString.includes('Z')) {
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) { // Invalid date
+      if (isNaN(date.getTime())) {
         return dateString;
       }
       const day = String(date.getUTCDate()).padStart(2, '0');
-      const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
       const year = date.getUTCFullYear();
       return `${day}/${month}/${year}`;
     } catch (e) {
-      return dateString; // Return original if parsing fails
+      return dateString;
     }
   }
-  // Assume it's already in the correct format or some other format we don't handle
   return dateString;
 };
 
@@ -158,7 +151,6 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   const [errors, setErrors] = useState<Partial<Record<keyof ApplicationFormData, string>>>({});
   const [isFetchingData, setIsFetchingData] = useState(true);
 
-  // Refs for focusing on validation error
   const dobRef = useRef<HTMLInputElement>(null);
   const idCardNumberRef = useRef<HTMLInputElement>(null);
   const idCardIssueDateRef = useRef<HTMLInputElement>(null);
@@ -168,14 +160,16 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   const gpa4Ref = useRef<HTMLInputElement>(null);
   const languageScoreRef = useRef<HTMLInputElement>(null);
   
-  // Custom SelectField with error display
-    const SelectField = ({ label, id, error, options, placeholder, disabled, ...props }: any) => {
-    // Check if options is an array of objects with label and value properties
+  const majorNameToCodeMap = useMemo(() => MAJORS_DATA.reduce((acc, major) => ({ ...acc, [major.name]: major.code }), {} as Record<string, string>), []);
+
+  const SelectField = ({ label, id, error, options, placeholder, disabled, required, ...props }: any) => {
     const isObjectOptions = Array.isArray(options) && options.length > 0 && typeof options[0] === 'object' && 'label' in options[0] && 'value' in options[0];
 
     return (
         <div>
-            <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
             <select
                 id={id}
                 disabled={disabled}
@@ -200,6 +194,23 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   const getUrlWithCacheBuster = () => {
     return `${SCRIPT_URL}?v=${new Date().getTime()}`;
   };
+  
+  const getOrientationOptionsForMajor = (majorCode: string, facility: string) => {
+    if (!majorCode || !facility) return [];
+    const major = MAJORS_DATA.find(m => m.code === majorCode);
+    if (!major || !major.availability[facility]) return [];
+
+    const options = [];
+    const availableOrientations = major.availability[facility];
+    if (availableOrientations.includes('research')) {
+        options.push({ value: 'research', label: 'Nghiên cứu' });
+    }
+    if (availableOrientations.includes('applied')) {
+        options.push({ value: 'applied', label: 'Ứng dụng' });
+    }
+    return options;
+  };
+
 
   useEffect(() => {
     const fetchApplicationData = async () => {
@@ -237,9 +248,15 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                         const rawValue = sheetData[header];
                         let processedValue: string;
     
-                        // Handle legacy full-text values from sheet by converting them to codes.
-                        // If it's already a code, the lookup will be falsy, and it will use the raw value.
-                        if (key === 'degreeClassification') {
+                        if (key === 'firstChoiceMajor' || key === 'secondChoiceMajor' || key === 'thirdChoiceMajor') {
+                            const rawValueStr = rawValue.toString();
+                            const isCode = MAJORS_DATA.some(m => m.code === rawValueStr);
+                            if (isCode) {
+                                processedValue = rawValueStr;
+                            } else {
+                                processedValue = majorNameToCodeMap[rawValueStr] || '';
+                            }
+                        } else if (key === 'degreeClassification') {
                             processedValue = degreeReverseMap[rawValue] || rawValue.toString();
                         } else if (key === 'graduationSystem') {
                             processedValue = graduationSystemReverseMap[rawValue] || rawValue.toString();
@@ -276,12 +293,37 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     };
     
     fetchApplicationData();
-  }, [user.email]);
+  }, [user.email, majorNameToCodeMap]);
 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    setFormData(prev => {
+        const newState = { ...prev, [name]: value };
+
+        if (name === 'trainingFacility') {
+            newState.firstChoiceMajor = '';
+            newState.firstChoiceOrientation = '';
+            newState.secondChoiceMajor = '';
+            newState.secondChoiceOrientation = '';
+            newState.thirdChoiceMajor = '';
+            newState.thirdChoiceOrientation = '';
+        }
+
+        if (name.endsWith('Major')) {
+            const orientationField = name.replace('Major', 'Orientation') as keyof ApplicationFormData;
+            const majorCode = value;
+            const orientationOptions = getOrientationOptionsForMajor(majorCode, newState.trainingFacility);
+            newState[orientationField] = '';
+            if (orientationOptions.length === 1) {
+                newState[orientationField] = orientationOptions[0].value as 'research' | 'applied';
+            }
+        }
+        
+        return newState;
+    });
+
     if (errors[name as keyof ApplicationFormData]) {
       setErrors(prev => ({...prev, [name]: ''}));
     }
@@ -290,7 +332,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   const handleNumericBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if ((name === 'gpa10' || name === 'gpa4' || name === 'languageScore') && value) {
-      const parsed = parseFloat(value.replace(',', '.')); // Replace comma for parsing
+      const parsed = parseFloat(value.replace(',', '.'));
       if (!isNaN(parsed)) {
         setFormData(prev => ({ ...prev, [name]: parsed.toFixed(2) }));
       }
@@ -302,6 +344,16 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     setFormData(prev => ({ ...prev, [name]: value as 'research' | 'applied' }));
   };
   
+  const availableMajorsForFacility = useMemo(() => {
+    if (!formData.trainingFacility) return [];
+    return MAJORS_DATA
+        .filter(major => major.availability[formData.trainingFacility])
+        .map(major => ({ label: major.name, value: major.code }));
+  }, [formData.trainingFacility]);
+
+  const isLimitedFacility = useMemo(() => ['Gia Lai', 'Long An'].includes(formData.trainingFacility), [formData.trainingFacility]);
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -311,7 +363,42 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     const newErrors: Partial<Record<keyof ApplicationFormData, string>> = {};
     let firstErrorRef: React.RefObject<HTMLInputElement> | null = null;
     
-    // Major choices validation
+    // --- START: REQUIRED FIELD VALIDATION ---
+    const requiredFieldConfig: { key: keyof ApplicationFormData; label: string }[] = [
+        { key: 'gender', label: 'Giới tính' },
+        { key: 'dob', label: 'Ngày sinh' },
+        { key: 'pob', label: 'Nơi sinh' },
+        { key: 'ethnicity', label: 'Dân tộc' },
+        { key: 'nationality', label: 'Quốc tịch' },
+        { key: 'idCardNumber', label: 'Số CCCD' },
+        { key: 'idCardIssueDate', label: 'Ngày cấp CCCD' },
+        { key: 'phone', label: 'Số điện thoại' },
+        { key: 'contactAddress', label: 'Địa chỉ liên hệ' },
+        { key: 'trainingFacility', label: 'Cơ sở đào tạo' },
+        { key: 'firstChoiceMajor', label: 'Nguyện vọng 1' },
+        { key: 'university', label: 'Trường tốt nghiệp đại học' },
+        { key: 'graduationYear', label: 'Năm tốt nghiệp' },
+        { key: 'gpa10', label: 'Điểm TB (hệ 10)' },
+        { key: 'graduationMajor', label: 'Ngành tốt nghiệp' },
+        { key: 'degreeClassification', label: 'Loại tốt nghiệp' },
+        { key: 'graduationSystem', label: 'Hệ tốt nghiệp' },
+        { key: 'supplementaryCert', label: 'Giấy chứng nhận hoàn thành bổ sung kiến thức' },
+        { key: 'language', label: 'Ngoại ngữ' },
+        { key: 'bonusPoints', label: 'Thông tin về điểm thưởng' },
+        { key: 'priorityCategory', label: 'Thông tin về đối tượng ưu tiên' },
+        { key: 'scholarshipPolicy', label: 'Chính sách học bổng' },
+    ];
+
+    requiredFieldConfig.forEach(({ key, label }) => {
+        const value = formData[key];
+        if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) {
+            if (!newErrors[key]) {
+                newErrors[key] = `${label} là trường bắt buộc.`;
+            }
+        }
+    });
+    // --- END: REQUIRED FIELD VALIDATION ---
+
     const choices = [
         { major: formData.firstChoiceMajor, orientation: formData.firstChoiceOrientation },
         { major: formData.secondChoiceMajor, orientation: formData.secondChoiceOrientation },
@@ -339,10 +426,29 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         if (duplicateIndices.has(2)) newErrors.thirdChoiceMajor = errorMsg;
     }
 
-    // Custom validation for research orientation based on graduation type and bonus points
+    const choicesForOrientationCheck: { majorKey: keyof ApplicationFormData; orientationKey: keyof ApplicationFormData }[] = [
+      { majorKey: 'firstChoiceMajor', orientationKey: 'firstChoiceOrientation' },
+      { majorKey: 'secondChoiceMajor', orientationKey: 'secondChoiceOrientation' },
+      { majorKey: 'thirdChoiceMajor', orientationKey: 'thirdChoiceOrientation' },
+    ];
+
+    choicesForOrientationCheck.forEach(({ majorKey, orientationKey }) => {
+      if (newErrors[majorKey]) return;
+
+      const majorCode = formData[majorKey];
+      const orientationValue = formData[orientationKey];
+      
+      if (majorCode && !orientationValue) {
+        const orientationOptions = getOrientationOptionsForMajor(majorCode, formData.trainingFacility);
+        if (orientationOptions.length > 1) {
+          newErrors[majorKey] = 'Bạn phải chọn 1 định hướng cho ngành đã chọn.';
+        }
+      }
+    });
+
     const isLowGraduation = ['TB', 'TBK', 'KXL'].includes(formData.degreeClassification);
     const hasNoQualifyingPaper = !['NCKH3', 'NCKH4', 'NCKH5'].includes(formData.bonusPoints);
-    const researchOrientationError = "Nếu tốt nghiệp loại Trung bình hoặc Trung bình khá và chọn định hướng Nghiên cứu, bạn phải có bài báo khoa học.";
+    const researchOrientationError = "Nếu Bạn tốt nghiệp loại Trung bình hoặc Trung bình khá và chọn định hướng Nghiên cứu, bạn phải có bài báo khoa học.";
 
     if (isLowGraduation && hasNoQualifyingPaper) {
         if (formData.firstChoiceOrientation === 'research') {
@@ -440,9 +546,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         return;
     }
 
-    // --- DATA FORMATTING ---
     const now = new Date();
-    // Format to DD/MM/YYYY HH:mm:ss for consistent timestamping
     const submissionTimestamp = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
     
     const mapOrientation = (orientation: 'research' | 'applied' | '') => {
@@ -480,10 +584,10 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         'Nghiên cứu khoa học': formData.bonusPoints,
         'Nguyện vọng 1': formData.firstChoiceMajor,
         'Định hướng NV1': mapOrientation(formData.firstChoiceOrientation),
-        'Nguyện vọng 2': formData.secondChoiceMajor,
-        'Định hướng NV2': mapOrientation(formData.secondChoiceOrientation),
-        'Nguyện vọng 3': formData.thirdChoiceMajor,
-        'Định hướng NV3': mapOrientation(formData.thirdChoiceOrientation),
+        'Nguyện vọng 2': isLimitedFacility ? '' : formData.secondChoiceMajor,
+        'Định hướng NV2': isLimitedFacility ? '' : mapOrientation(formData.secondChoiceOrientation),
+        'Nguyện vọng 3': isLimitedFacility ? '' : formData.thirdChoiceMajor,
+        'Định hướng NV3': isLimitedFacility ? '' : mapOrientation(formData.thirdChoiceOrientation),
         'Học bổng': formData.scholarshipPolicy,
         'Bổ sung kiến thức': formData.supplementaryCert,
         'Cơ sở đào tạo': formData.trainingFacility,
@@ -525,7 +629,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         setSubmitMessageType('error');
     } finally {
         setIsSubmitting(false);
-        window.scrollTo(0, 0); // Scroll to top to show the message
+        window.scrollTo(0, 0);
     }
   };
   
@@ -586,70 +690,83 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
             )}
 
             <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Section I */}
             <div className="border-b pb-6">
                 <h2 className="text-xl font-semibold text-gray-700 mb-4">I. Thông tin người dự tuyển</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <InputField label="Họ và tên" id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} disabled />
-                <SelectField label="Giới tính" id="gender" name="gender" value={formData.gender} onChange={handleChange} options={GENDERS} placeholder="Chọn giới tính" />
-                <InputField ref={dobRef} label="Ngày sinh" id="dob" name="dob" type="text" placeholder="DD/MM/YYYY" value={formData.dob} onChange={handleChange} error={errors.dob} />
-                <SelectField label="Nơi sinh" id="pob" name="pob" value={formData.pob} onChange={handleChange} options={CITIES} placeholder="Chọn nơi sinh" />
-                <SelectField label="Dân tộc" id="ethnicity" name="ethnicity" value={formData.ethnicity} onChange={handleChange} options={ETHNICITIES} placeholder="Chọn dân tộc" />
-                <SelectField label="Quốc tịch" id="nationality" name="nationality" value={formData.nationality} onChange={handleChange} options={NATIONALITIES} placeholder="Chọn quốc tịch"/>
-                <InputField ref={idCardNumberRef} label="Số CCCD" id="idCardNumber" name="idCardNumber" value={formData.idCardNumber} onChange={handleChange} error={errors.idCardNumber} />
-                <InputField ref={idCardIssueDateRef} label="Ngày cấp" id="idCardIssueDate" name="idCardIssueDate" type="text" placeholder="DD/MM/YYYY" value={formData.idCardIssueDate} onChange={handleChange} error={errors.idCardIssueDate} />
-                <InputField label="Nơi cấp" id="idCardIssuePlace" name="idCardIssuePlace" value={formData.idCardIssuePlace} onChange={handleChange} />
-                <InputField ref={phoneRef} label="Số điện thoại" id="phone" name="phone" value={formData.phone} onChange={handleChange} error={errors.phone} />
+                <SelectField label="Giới tính" id="gender" name="gender" value={formData.gender} onChange={handleChange} options={GENDERS} placeholder="Chọn giới tính" required error={errors.gender} />
+                <InputField ref={dobRef} label="Ngày sinh" id="dob" name="dob" type="text" placeholder="DD/MM/YYYY" value={formData.dob} onChange={handleChange} required error={errors.dob} />
+                <SelectField label="Nơi sinh" id="pob" name="pob" value={formData.pob} onChange={handleChange} options={CITIES} placeholder="Chọn nơi sinh" required error={errors.pob} />
+                <SelectField label="Dân tộc" id="ethnicity" name="ethnicity" value={formData.ethnicity} onChange={handleChange} options={ETHNICITIES} placeholder="Chọn dân tộc" required error={errors.ethnicity} />
+                <SelectField label="Quốc tịch" id="nationality" name="nationality" value={formData.nationality} onChange={handleChange} options={NATIONALITIES} placeholder="Chọn quốc tịch" required error={errors.nationality}/>
+                <InputField ref={idCardNumberRef} label="Số CCCD" id="idCardNumber" name="idCardNumber" value={formData.idCardNumber} onChange={handleChange} required error={errors.idCardNumber} />
+                <InputField ref={idCardIssueDateRef} label="Ngày cấp CCCD" id="idCardIssueDate" name="idCardIssueDate" type="text" placeholder="DD/MM/YYYY" value={formData.idCardIssueDate} onChange={handleChange} required error={errors.idCardIssueDate} />
+                <InputField label="Nơi cấp CCCD" id="idCardIssuePlace" name="idCardIssuePlace" value={formData.idCardIssuePlace} onChange={handleChange} error={errors.idCardIssuePlace}/>
+                <InputField ref={phoneRef} label="Số điện thoại" id="phone" name="phone" value={formData.phone} onChange={handleChange} required error={errors.phone} />
                 <div className="lg:col-span-2">
                     <InputField label="Email" id="email" name="email" value={formData.email} onChange={handleChange} disabled />
                 </div>
-                <InputField label="Địa chỉ liên hệ" id="contactAddress" name="contactAddress" value={formData.contactAddress} onChange={handleChange} />
+                <InputField label="Địa chỉ liên hệ" id="contactAddress" name="contactAddress" value={formData.contactAddress} onChange={handleChange} required error={errors.contactAddress} />
                 <div className="lg:col-span-2">
                     <InputField label="Cơ quan công tác" id="workplace" name="workplace" value={formData.workplace} onChange={handleChange} />
                 </div>
                 </div>
             </div>
 
-            {/* Section II */}
             <div className="border-b pb-6">
                 <h2 className="text-xl font-semibold text-gray-700 mb-4">II. Thông tin đăng ký dự tuyển</h2>
+                {isLimitedFacility && (
+                    <div className="text-sm text-yellow-800 bg-yellow-50 p-3 rounded-md mb-6 border border-yellow-200">
+                        <b>Lưu ý:</b> Đối với cơ sở đào tạo tại <b>{formData.trainingFacility}</b>, thí sinh chỉ được đăng ký 1 nguyện vọng duy nhất.
+                    </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <SelectField label="Cơ sở đào tạo" id="trainingFacility" name="trainingFacility" value={formData.trainingFacility} onChange={handleChange} options={TRAINING_FACILITIES} placeholder="Chọn cơ sở" />
-                    <div></div>
-                    <SelectField label="Nguyện vọng 1" id="firstChoiceMajor" name="firstChoiceMajor" value={formData.firstChoiceMajor} onChange={handleChange} options={MAJORS} placeholder="Chọn ngành" error={errors.firstChoiceMajor} />
-                    <RadioGroup label="Định hướng" name="firstChoiceOrientation" selectedValue={formData.firstChoiceOrientation} onChange={handleRadioChange} options={[{value: 'research', label: 'Nghiên cứu'}, {value: 'applied', label: 'Ứng dụng'}]} />
-                    <SelectField label="Nguyện vọng 2" id="secondChoiceMajor" name="secondChoiceMajor" value={formData.secondChoiceMajor} onChange={handleChange} options={MAJORS} placeholder="Chọn ngành" error={errors.secondChoiceMajor} />
-                    <RadioGroup label="Định hướng" name="secondChoiceOrientation" selectedValue={formData.secondChoiceOrientation} onChange={handleRadioChange} options={[{value: 'research', label: 'Nghiên cứu'}, {value: 'applied', label: 'Ứng dụng'}]} />
-                    <SelectField label="Nguyện vọng 3" id="thirdChoiceMajor" name="thirdChoiceMajor" value={formData.thirdChoiceMajor} onChange={handleChange} options={MAJORS} placeholder="Chọn ngành" error={errors.thirdChoiceMajor} />
-                    <RadioGroup label="Định hướng" name="thirdChoiceOrientation" selectedValue={formData.thirdChoiceOrientation} onChange={handleRadioChange} options={[{value: 'research', label: 'Nghiên cứu'}, {value: 'applied', label: 'Ứng dụng'}]} />
+                    <SelectField label="Cơ sở đào tạo" id="trainingFacility" name="trainingFacility" value={formData.trainingFacility} onChange={handleChange} options={TRAINING_FACILITIES} placeholder="Chọn cơ sở" required error={errors.trainingFacility} />
+                    <div className="md:col-span-2 -mb-2"></div>
+                    <SelectField label="Nguyện vọng 1" id="firstChoiceMajor" name="firstChoiceMajor" value={formData.firstChoiceMajor} onChange={handleChange} options={availableMajorsForFacility} placeholder="Chọn ngành" required error={errors.firstChoiceMajor} disabled={!formData.trainingFacility} />
+                    {getOrientationOptionsForMajor(formData.firstChoiceMajor, formData.trainingFacility).length > 0 && (
+                        <RadioGroup label="Định hướng NV1" name="firstChoiceOrientation" selectedValue={formData.firstChoiceOrientation} onChange={handleRadioChange} options={getOrientationOptionsForMajor(formData.firstChoiceMajor, formData.trainingFacility)} />
+                    )}
+
+                    <div className="md:col-span-2 border-t mt-4 mb-2"></div>
+
+                    <SelectField label="Nguyện vọng 2" id="secondChoiceMajor" name="secondChoiceMajor" value={formData.secondChoiceMajor} onChange={handleChange} options={availableMajorsForFacility} placeholder="Chọn ngành" error={errors.secondChoiceMajor} disabled={!formData.trainingFacility || isLimitedFacility} />
+                    {getOrientationOptionsForMajor(formData.secondChoiceMajor, formData.trainingFacility).length > 0 && !isLimitedFacility && (
+                        <RadioGroup label="Định hướng NV2" name="secondChoiceOrientation" selectedValue={formData.secondChoiceOrientation} onChange={handleRadioChange} options={getOrientationOptionsForMajor(formData.secondChoiceMajor, formData.trainingFacility)} />
+                    )}
+                    
+                    <div className="md:col-span-2 border-t mt-4 mb-2"></div>
+
+                    <SelectField label="Nguyện vọng 3" id="thirdChoiceMajor" name="thirdChoiceMajor" value={formData.thirdChoiceMajor} onChange={handleChange} options={availableMajorsForFacility} placeholder="Chọn ngành" error={errors.thirdChoiceMajor} disabled={!formData.trainingFacility || isLimitedFacility} />
+                    {getOrientationOptionsForMajor(formData.thirdChoiceMajor, formData.trainingFacility).length > 0 && !isLimitedFacility && (
+                        <RadioGroup label="Định hướng NV3" name="thirdChoiceOrientation" selectedValue={formData.thirdChoiceOrientation} onChange={handleRadioChange} options={getOrientationOptionsForMajor(formData.thirdChoiceMajor, formData.trainingFacility)} />
+                    )}
                 </div>
             </div>
             
-            {/* Section III */}
             <div className="border-b pb-6">
                 <h2 className="text-xl font-semibold text-gray-700 mb-4">III. Thông tin về văn bằng</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                    <InputField label="Trường tốt nghiệp đại học" id="university" name="university" value={formData.university} onChange={handleChange}/>
+                    <InputField label="Trường tốt nghiệp đại học" id="university" name="university" value={formData.university} onChange={handleChange} required error={errors.university} />
                     </div>
-                    <InputField label="Năm tốt nghiệp" id="graduationYear" name="graduationYear" type="number" value={formData.graduationYear} onChange={handleChange}/>
-                    <InputField ref={gpa10Ref} label="Điểm TB (hệ 10)" id="gpa10" name="gpa10" type="text" value={formData.gpa10} onChange={handleChange} onBlur={handleNumericBlur} error={errors.gpa10} placeholder="Ví dụ: 8.50" />
+                    <InputField label="Năm tốt nghiệp" id="graduationYear" name="graduationYear" type="number" value={formData.graduationYear} onChange={handleChange} required error={errors.graduationYear}/>
+                    <InputField ref={gpa10Ref} label="Điểm TB (hệ 10)" id="gpa10" name="gpa10" type="text" value={formData.gpa10} onChange={handleChange} onBlur={handleNumericBlur} required error={errors.gpa10} placeholder="Ví dụ: 8.50" />
                     <InputField ref={gpa4Ref} label="Điểm TB (hệ 4)" id="gpa4" name="gpa4" type="text" value={formData.gpa4} onChange={handleChange} onBlur={handleNumericBlur} error={errors.gpa4} placeholder="Ví dụ: 3.20" />
                     <div className="lg:col-span-1"></div>
-                    <InputField label="Ngành tốt nghiệp" id="graduationMajor" name="graduationMajor" value={formData.graduationMajor} onChange={handleChange}/>
-                    <SelectField label="Loại tốt nghiệp" id="degreeClassification" name="degreeClassification" value={formData.degreeClassification} onChange={handleChange} options={DEGREE_CLASSIFICATIONS} placeholder="Chọn loại"/>
-                    <SelectField label="Hệ tốt nghiệp" id="graduationSystem" name="graduationSystem" value={formData.graduationSystem} onChange={handleChange} options={GRADUATION_SYSTEMS} placeholder="Chọn hệ"/>
+                    <InputField label="Ngành tốt nghiệp" id="graduationMajor" name="graduationMajor" value={formData.graduationMajor} onChange={handleChange} required error={errors.graduationMajor} />
+                    <SelectField label="Loại tốt nghiệp" id="degreeClassification" name="degreeClassification" value={formData.degreeClassification} onChange={handleChange} options={DEGREE_CLASSIFICATIONS} placeholder="Chọn loại" required error={errors.degreeClassification} />
+                    <SelectField label="Hệ tốt nghiệp" id="graduationSystem" name="graduationSystem" value={formData.graduationSystem} onChange={handleChange} options={GRADUATION_SYSTEMS} placeholder="Chọn hệ" required error={errors.graduationSystem} />
                     <div className="lg:col-span-3">
-                        <SelectField label="Giấy chứng nhận hoàn thành bổ sung kiến thức" id="supplementaryCert" name="supplementaryCert" value={formData.supplementaryCert} onChange={handleChange} options={['Có', 'Không']} placeholder="Chọn..." />
+                        <SelectField label="Giấy chứng nhận hoàn thành bổ sung kiến thức" id="supplementaryCert" name="supplementaryCert" value={formData.supplementaryCert} onChange={handleChange} options={['Có', 'Không']} placeholder="Chọn..." required error={errors.supplementaryCert} />
                     </div>
                 </div>
             </div>
             
-            {/* Section IV */}
             <div className="border-b pb-6">
                 <h2 className="text-xl font-semibold text-gray-700 mb-4">IV. Thông tin về trình độ ngoại ngữ</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <SelectField label="Ngoại ngữ" id="language" name="language" value={formData.language} onChange={handleChange} options={LANGUAGES} placeholder="Chọn ngoại ngữ"/>
+                    <SelectField label="Ngoại ngữ" id="language" name="language" value={formData.language} onChange={handleChange} options={LANGUAGES} placeholder="Chọn ngoại ngữ" required error={errors.language} />
                     <SelectField label="Loại bằng/chứng chỉ" id="languageCertType" name="languageCertType" value={formData.languageCertType} onChange={handleChange} options={LANGUAGE_CERT_TYPES} placeholder="Chọn loại"/>
                     <InputField label="Nơi cấp" id="languageCertIssuer" name="languageCertIssuer" value={formData.languageCertIssuer} onChange={handleChange}/>
                     <InputField ref={languageScoreRef} label="Điểm ngoại ngữ" id="languageScore" name="languageScore" type="text" value={formData.languageScore} onChange={handleChange} onBlur={handleNumericBlur} error={errors.languageScore} placeholder="Ví dụ: 6.50"/>
@@ -657,13 +774,11 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                 </div>
             </div>
             
-            {/* Other sections */}
-            <SelectField label="V. Thông tin về điểm thưởng (nếu có)" id="bonusPoints" name="bonusPoints" value={formData.bonusPoints} onChange={handleChange} options={BONUS_POINTS_CATEGORIES} />
-            <SelectField label="VI. Thông tin về đối tượng ưu tiên (nếu có)" id="priorityCategory" name="priorityCategory" value={formData.priorityCategory} onChange={handleChange} options={PRIORITY_CATEGORIES} />
-            <SelectField label="VII. Chính sách học bổng (nếu có)" id="scholarshipPolicy" name="scholarshipPolicy" value={formData.scholarshipPolicy} onChange={handleChange} options={SCHOLARSHIP_POLICIES} />
+            <SelectField label="V. Thông tin về điểm thưởng (nếu có)" id="bonusPoints" name="bonusPoints" value={formData.bonusPoints} onChange={handleChange} options={BONUS_POINTS_CATEGORIES} required error={errors.bonusPoints} />
+            <SelectField label="VI. Thông tin về đối tượng ưu tiên (nếu có)" id="priorityCategory" name="priorityCategory" value={formData.priorityCategory} onChange={handleChange} options={PRIORITY_CATEGORIES} required error={errors.priorityCategory} />
+            <SelectField label="VII. Chính sách học bổng (nếu có)" id="scholarshipPolicy" name="scholarshipPolicy" value={formData.scholarshipPolicy} onChange={handleChange} options={SCHOLARSHIP_POLICIES} required error={errors.scholarshipPolicy} />
 
 
-            {/* Action Buttons */}
             <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors disabled:bg-green-300">
                 {isSubmitting ? 'Đang lưu...' : 'Lưu thông tin'}
@@ -683,11 +798,13 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   );
 };
 
-const InputField = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement> & { label: string, error?: string }>(({ label, id, error, ...props }, ref) => {
+const InputField = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement> & { label: string, error?: string, required?: boolean }>(({ label, id, error, required, ...props }, ref) => {
     const errorClasses = error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500';
     return (
         <div>
-            <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
             <input ref={ref} id={id} {...props} className={`mt-1 block w-full px-3 py-2 bg-white border rounded-md shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm disabled:bg-gray-100 ${errorClasses}`} />
             {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
         </div>
