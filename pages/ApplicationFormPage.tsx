@@ -34,6 +34,7 @@ const keyToHeaderMap: { [key: string]: string } = {
     thirdChoiceMajor: 'Nguyện vọng 3',
     firstChoiceOrientation: 'Định hướng NV1',
     secondChoiceOrientation: 'Định hướng NV2',
+    // Fix: Corrected a duplicate property name. Changed `secondChoiceOrientation` to `thirdChoiceOrientation`.
     thirdChoiceOrientation: 'Định hướng NV3',
     university: 'Trường tốt nghiệp đại học',
     graduationYear: 'Năm TN',
@@ -634,8 +635,321 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
   };
   
   const handlePrint = () => {
-      window.print();
-  }
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+
+    const checkedBox = '&#9746;'; // Checked box
+    const uncheckedBox = '&#9744;'; // Unchecked box
+
+    const getMajorName = (code: string) => MAJORS_DATA.find(m => m.code === code)?.name || code || '';
+    const getOrientationLabel = (value: string) => {
+      if (value === 'research') return 'Nghiên cứu';
+      if (value === 'applied') return 'Ứng dụng';
+      return '';
+    };
+    const getDegreeLabel = (value: string) => DEGREE_CLASSIFICATIONS.find(o => o.value === value)?.label || value || '';
+    const getGradSystemLabel = (value: string) => GRADUATION_SYSTEMS.find(o => o.value === value)?.label || value || '';
+    const getLanguageLabel = (value: string) => LANGUAGES.find(o => o.value === value)?.label || value || '';
+    const getLanguageCertLabel = (value: string) => LANGUAGE_CERT_TYPES.find(o => o.value === value)?.label || value || '';
+    const getPriorityLabel = (value: string) => PRIORITY_CATEGORIES.find(o => o.value === value)?.label || value || '';
+    const getBonusPointsLabel = (value: string) => BONUS_POINTS_CATEGORIES.find(o => o.value === value)?.label || value || '';
+
+    const numberToVietnameseWords = (numStr: string): string => {
+        if (!numStr || typeof numStr !== 'string' || !numStr.trim()) return '';
+        numStr = numStr.replace(',', '.');
+        if (isNaN(parseFloat(numStr))) return '';
+
+        const units = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+
+        const readTwoDigits = (twoDigits: string): string => {
+            const num = parseInt(twoDigits, 10);
+            if (num === 0) return (twoDigits.length > 1) ? '' : units[0];
+            if (num < 10) return units[num];
+            
+            const ten = Math.floor(num / 10);
+            const unit = num % 10;
+            
+            let str = '';
+            if (ten === 1) {
+                str = 'mười';
+                if (unit === 5) str += ' lăm';
+                else if (unit !== 0) str += ' ' + units[unit];
+            } else { // ten > 1
+                str = units[ten] + ' mươi';
+                if (unit === 1) str += ' mốt';
+                else if (unit === 5) str += ' lăm';
+                else if (unit !== 0) str += ' ' + units[unit];
+            }
+            return str;
+        };
+
+        const readThreeDigits = (threeDigits: string): string => {
+            const num = parseInt(threeDigits, 10);
+            if (num < 100) return readTwoDigits(String(num));
+            
+            const hundred = Math.floor(num / 100);
+            const remainder = num % 100;
+            let str = units[hundred] + ' trăm';
+            
+            if (remainder > 0) {
+                if (remainder < 10) {
+                    str += ' linh ' + units[remainder];
+                } else {
+                    str += ' ' + readTwoDigits(String(remainder));
+                }
+            }
+            return str;
+        };
+
+        const [integerPart, decimalPart] = numStr.split('.');
+        
+        let integerWords = readThreeDigits(integerPart);
+
+        if (!decimalPart || parseInt(decimalPart.replace(/0+$/, ''), 10) === 0) {
+            return integerWords;
+        }
+        
+        let decimalWords = '';
+        const cleanDecimalPart = decimalPart.replace(/0+$/, '');
+        if (cleanDecimalPart.length <= 2) {
+            if (cleanDecimalPart.length === 2 && cleanDecimalPart.startsWith('0')) {
+                 decimalWords = 'linh ' + units[parseInt(cleanDecimalPart[1])];
+            } else {
+                decimalWords = readTwoDigits(cleanDecimalPart);
+            }
+        } else {
+            for (const digit of cleanDecimalPart) {
+                decimalWords += units[parseInt(digit, 10)] + ' ';
+            }
+            decimalWords = decimalWords.trim();
+        }
+        
+        return `${integerWords} chấm ${decimalWords}`;
+    };
+
+    const gpa10Words = formData.gpa10 ? `(bằng chữ: ${numberToVietnameseWords(formData.gpa10)})` : '';
+    const gpa4Words = formData.gpa4 ? `(bằng chữ: ${numberToVietnameseWords(formData.gpa4)})` : '';
+    const languageScoreWords = formData.languageScore ? `(bằng chữ: ${numberToVietnameseWords(formData.languageScore)})` : '';
+
+    const content = `
+    <html>
+      <head>
+        <title>Phiếu Đăng ký dự tuyển</title>
+        <style>
+          body { 
+            font-family: 'Times New Roman', Times, serif; 
+            font-size: 11pt; 
+            color: #000;
+            margin: 0;
+            padding: 0;
+            line-height: 1.15;
+          }
+          .page-container {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 0.5in;
+            margin: 0 auto;
+            box-sizing: border-box;
+            position: relative;
+          }
+          .header, .title { text-align: center; }
+          .header { margin-bottom: 0.5em; line-height: 1.2; }
+          .title { font-weight: bold; font-size: 13pt; margin-bottom: 0.5em; margin-top: 1em; }
+          .section-title { font-weight: bold; margin-top: 0.5em; margin-bottom: 0.2em; }
+          .section-content { padding-left: 1.5em; }
+          p { margin-top: 0.5em; margin-bottom: 0.5em; }
+          .data { font-weight: bold; }
+          .signature-block { 
+            float: right; 
+            width: 45%; 
+            text-align: center; 
+            margin-top: 1em; 
+          }
+          .signature-block .date { font-style: italic; }
+          .signature-block .role { font-weight: bold; }
+          .signature-block .name-placeholder { margin-top: 40px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 0.2em; }
+          td { padding: 0 4px 0 0; vertical-align: top; }
+          .checkbox-label { margin-left: 5px; margin-right: 15px; }
+          .dotted-line { border-bottom: 1px dotted #000; display: inline-block; min-width: 100px; }
+          .full-width { display: block; margin-bottom: 0.2em; }
+          .footer-id {
+            position: absolute;
+            bottom: 0.5in;
+            left: 0.5in;
+          }
+          @media print {
+            @page {
+              size: A4;
+              margin: 0.3in;
+            }
+            body, .page-container {
+              margin: 0;
+              padding: 0;
+              width: auto;
+              min-height: 0;
+            }
+            .footer-id {
+                position: fixed;
+                bottom: 0.1in;
+                left: 0.3in;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="page-container">
+          <div class="header">
+              <strong>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</strong><br/>
+              <strong><u>Độc lập – Tự do – Hạnh phúc</u></strong>
+          </div>
+
+          <div class="title">PHIẾU ĐĂNG KÝ DỰ TUYỂN TRÌNH ĐỘ THẠC SĨ NĂM 2026</div>
+
+          <div class="section-title">I. Thông tin về người dự tuyển</div>
+          <div class="section-content">
+            <table>
+                <tr>
+                    <td style="width:50%;">1. Họ và tên: <span class="data">${formData.fullName}</span></td>
+                    <td>2. Giới tính: <span class="data">${formData.gender}</span></td>
+                </tr>
+                <tr>
+                    <td>3. Sinh ngày: <span class="data">${formData.dob}</span></td>
+                    <td>4. Nơi sinh: <span class="data">${formData.pob}</span></td>
+                </tr>
+                <tr>
+                    <td>5. Dân tộc: <span class="data">${formData.ethnicity}</span></td>
+                    <td>6. Quốc tịch: <span class="data">${formData.nationality}</span></td>
+                </tr>
+                <tr>
+                    <td>7. Số CCCD: <span class="data">${formData.idCardNumber}</span></td>
+                    <td>8. Thời gian cấp: <span class="data">${formData.idCardIssueDate}</span></td>
+                </tr>
+            </table>
+            <div class="full-width">9. Nơi cấp: <span class="data">${formData.idCardIssuePlace}</span></div>
+            <table>
+                <tr>
+                    <td style="width:50%;">10. Điện thoại: <span class="data">${formData.phone}</span></td>
+                    <td>11. Email: <span class="data">${formData.email}</span></td>
+                </tr>
+            </table>
+            <div class="full-width">12. Địa chỉ liên hệ: <span class="data">${formData.contactAddress}</span></div>
+            <div class="full-width">13. Cơ quan công tác: <span class="data">${formData.workplace || 'Không'}</span></div>
+          </div>
+          
+          <div class="section-title">II. Thông tin về cơ sở đào tạo, nguyện vọng đăng ký ngành dự tuyển và chương trình đào tạo</div>
+           <div class="section-content">
+            <div class="full-width">Cơ sở đào tạo tại: <span class="data">${formData.trainingFacility}</span></div>
+            <table>
+                <tr>
+                    <td style="width: 70%;">1. NV1: <span class="data">${getMajorName(formData.firstChoiceMajor)}</span></td>
+                    <td style="padding-left: 0.5cm;">Định hướng: <span class="data">${getOrientationLabel(formData.firstChoiceOrientation)}</span></td>
+                </tr>
+                <tr>
+                    <td style="width: 70%;">2. NV2: <span class="data">${getMajorName(formData.secondChoiceMajor)}</span></td>
+                    <td style="padding-left: 0.5cm;">Định hướng: <span class="data">${getOrientationLabel(formData.secondChoiceOrientation)}</span></td>
+                </tr>
+                <tr>
+                    <td style="width: 70%;">3. NV3: <span class="data">${getMajorName(formData.thirdChoiceMajor)}</span></td>
+                    <td style="padding-left: 0.5cm;">Định hướng: <span class="data">${getOrientationLabel(formData.thirdChoiceOrientation)}</span></td>
+                </tr>
+            </table>
+          </div>
+
+          <div class="section-title">III. Thông tin về văn bằng</div>
+          <div class="section-content">
+            <div>1. Văn bằng đại học: 
+                ${formData.graduationYear ? checkedBox : uncheckedBox} <span class="checkbox-label">Đã tốt nghiệp</span>
+                ${!formData.graduationYear ? checkedBox : uncheckedBox} <span class="checkbox-label">Đã đủ điều kiện công nhận tốt nghiệp</span>
+                ${uncheckedBox} <span class="checkbox-label">Khác</span>
+            </div>
+            <div>Cơ sở cấp: <span class="data">${formData.university}</span><span style="display:inline-block; width: 50px;"></span>Năm tốt nghiệp: <span class="data">${formData.graduationYear}</span></div>
+            <div>Điểm trung bình chung: <span class="data">${formData.gpa10 || '...'}</span>/10 ${gpa10Words} hoặc <span class="data">${formData.gpa4 || '...'}</span>/4 ${gpa4Words}</div>
+            <table>
+                <tr>
+                    <td style="width:50%;">Ngành tốt nghiệp: <span class="data">${formData.graduationMajor}</span></td>
+                    <td>Loại tốt nghiệp: <span class="data">${getDegreeLabel(formData.degreeClassification)}</span></td>
+                </tr>
+                <tr>
+                    <td colspan="2">Hình thức đào tạo: <span class="data">${getGradSystemLabel(formData.graduationSystem)}</span></td>
+                </tr>
+            </table>
+            <div>2. Giấy chứng nhận hoàn thành chương trình bổ sung kiến thức ngành:
+                ${formData.supplementaryCert === 'Có' ? checkedBox : uncheckedBox} <span class="checkbox-label">Có</span>
+                ${formData.supplementaryCert === 'Không' ? checkedBox : uncheckedBox} <span class="checkbox-label">Không</span>
+            </div>
+          </div>
+
+          <div class="section-title">IV. Thông tin về năng lực ngoại ngữ: 
+              ${formData.language ? checkedBox : uncheckedBox} <span class="checkbox-label">Đáp ứng về NLNN</span>
+              ${uncheckedBox} <span class="checkbox-label">Thi đánh giá NLNN</span>
+          </div>
+          <div class="section-content">
+            <div>1. Đối với văn bằng của Trường ĐHSP Tp.HCM: ${uncheckedBox} Đã tốt nghiệp ${uncheckedBox} Đã đủ điều kiện công nhận tốt nghiệp ${uncheckedBox} Khác</div>
+            <div>2. Đối với chứng chỉ: 
+                ${formData.languageCertType ? checkedBox : uncheckedBox} <span class="checkbox-label">Đã có chứng chỉ</span>
+                ${!formData.languageCertType ? checkedBox : uncheckedBox} <span class="checkbox-label">Đã đủ điều kiện cấp chứng chỉ</span>
+                ${uncheckedBox} <span class="checkbox-label">Khác</span>
+            </div>
+            <table>
+                <tr>
+                    <td style="width:40%;">Ngoại ngữ: <span class="data">${getLanguageLabel(formData.language)}</span></td>
+                    <td>Loại bằng/Chứng chỉ: <span class="data">${getLanguageCertLabel(formData.languageCertType)}</span></td>
+                </tr>
+            </table>
+            <div>Điểm ngoại ngữ: <span class="data">${formData.languageScore || '...'}</span> ${languageScoreWords}</div>
+            <table>
+                <tr>
+                    <td style="width:50%;">Ngày cấp: <span class="data">${formData.languageCertDate}</span></td>
+                    <td>Cơ sở cấp: <span class="data">${formData.languageCertIssuer}</span></td>
+                </tr>
+            </table>
+          </div>
+
+          <div class="section-title">V. Thông tin về điểm thưởng</div>
+          <div class="section-content">
+            <div>Thành tích và giải thưởng nghiên cứu khoa học: <span class="data">${getBonusPointsLabel(formData.bonusPoints)}</span></div>
+            <div>Trong đó: 
+                ${uncheckedBox} <span class="checkbox-label">Tác giả chính hoặc chủ nhiệm đề tài</span>
+                ${uncheckedBox} <span class="checkbox-label">Đồng tác giả hoặc thành viên đề tài</span>
+            </div>
+          </div>
+
+          <div class="section-title">VI. Thông tin về đối tượng ưu tiên: <span class="data">${getPriorityLabel(formData.priorityCategory)}</span></div>
+
+          <p style="margin-top: 1em; text-align: justify; line-height: 1.3;">
+              Tôi xin cam kết chấp hành đúng Quy chế Tuyển sinh và đào tạo trình độ thạc sĩ hiện hành. Những lời khai trên của tôi là đúng sự thật, nếu có sai sót tôi xin chịu hoàn toàn trách nhiệm./.
+          </p>
+
+          <div class="signature-block">
+              <div class="date">Thành phố Hồ Chí Minh, ngày ${day} tháng ${month} năm ${year}</div>
+              <div class="role">Người dự tuyển</div>
+              <em>(Ký tên, ghi rõ họ và tên)</em>
+              <div class="name-placeholder"><span class="data">${formData.fullName}</span></div>
+          </div>
+          
+          <div style="clear: both;"></div>
+          <div class="footer-id">ID: <span class="data">${user.id}</span></div>
+
+        </div>
+      </body>
+    </html>`;
+    
+    const printWindow = window.open('', '_blank', 'height=800,width=800');
+    if (printWindow) {
+      printWindow.document.write(content);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    } else {
+      alert('Vui lòng cho phép cửa sổ pop-up để in hồ sơ.');
+    }
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
