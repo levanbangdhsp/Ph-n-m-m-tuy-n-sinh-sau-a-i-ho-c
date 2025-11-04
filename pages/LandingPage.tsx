@@ -108,10 +108,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ navigate, user, onLogout }) =
                         icon={<ClipboardCheckIcon className="w-12 h-12 text-green-600" />}
                         title="Kết quả xét hồ sơ"
                         description={<>Kiểm tra trạng thái và kết quả<br/>vòng xét duyệt hồ sơ.</>}
-                        buttonText="Xem kết quả"
-                        onButtonClick={() => alert('Chức năng đang được phát triển.')}
-                        status="Chưa có kết quả"
-                        statusColor="text-gray-500"
+                        buttonText="Xem chi tiết"
+                        onButtonClick={() => navigate(Page.ApplicationStatus)}
                     />
                     <ActionCard 
                         icon={<AcademicCapIcon className="w-12 h-12 text-yellow-600" />}

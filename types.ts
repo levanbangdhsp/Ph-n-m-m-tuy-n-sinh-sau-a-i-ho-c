@@ -4,7 +4,31 @@ export enum Page {
   Register,
   ForgotPassword,
   Application,
+  ApplicationStatus,
 }
+
+export enum ApplicationStatusEnum {
+  NOT_SUBMITTED = 'Chưa nộp hồ sơ',
+  SUBMITTED = 'Đã nộp thành công',
+  PROCESSING = 'Đang trong quá trình xử lý',
+  NEEDS_UPDATE = 'Yêu cầu bổ sung',
+  VALID = 'Hồ sơ hợp lệ',
+  INVALID = 'Hồ sơ không hợp lệ',
+}
+
+export interface TimelineEvent {
+    stage: string;
+    date: string | null;
+    completed: boolean;
+    current: boolean;
+}
+
+export interface ApplicationStatusData {
+  status: ApplicationStatusEnum;
+  details: string;
+  timeline: TimelineEvent[];
+}
+
 
 export interface User {
   id: string;
