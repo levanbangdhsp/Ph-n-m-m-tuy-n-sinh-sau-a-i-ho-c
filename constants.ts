@@ -131,17 +131,39 @@ export const ETHNICITIES = [
   'Người nước ngoài', 'Không xác định'
 ];
 
-export const BONUS_POINTS_CATEGORIES = [
+export const RESEARCH_ACHIEVEMENT_CATEGORIES = [
   { label: 'Không', value: 'NCKH0' },
   { label: 'Đạt giải Nhất, Nhì, Ba sinh viên NCKH cấp Bộ hoặc tương đương.', value: 'NCKH1' },
-  { label: 'Đạt giải Nhất, Nhì, Ba sinh viên NCKH cấp Trường hoặc tương đương.', value: 'NCKH2' },
+  { label: 'Đạt giải Nhất, Nhì, Ba sinh viên NCKH cấp Trường hoặc Giải khuyến khích sinh viên NCKH cấp Bộ hoặc tương đương.', value: 'NCKH2' },
   { label: 'Có kết quả NCKH đã được công bố trong các ấn phẩm thuộc danh mục Web of Science hoặc Scopus hoặc bài báo đã được đăng trên các tạp chí khoa học quốc tế uy tín khác có mã số chuẩn ISSN.', value: 'NCKH3' },
   { label: 'Có bài báo đã được đăng trên các tạp chí khoa học trong nước có mã số chuẩn ISSN được Hội đồng Giáo sư nhà nước công nhận.', value: 'NCKH4' },
   { label: 'Có bài báo đã được đăng trên các Kỷ yếu của Hội nghị, Hội thảo Khoa học trong nước hoặc quốc tế có mã số chuẩn ISSN/ISBN.', value: 'NCKH5' },
-  { label: 'Đề tài nghiên cứu khoa học cấp cơ sở hoặc tương đương trở lên và phải có kết quả nghiệm thu từ mức đạt trở lên.', value: 'NCKH6' },
-  { label: 'Đạt giải Nhất, Nhì, Ba các kỳ thi Olympic sinh viên toàn quốc hoặc tương đương.', value: 'NCKH7' },
-  { label: 'Giáo viên giỏi cấp quốc gia hoặc tương đương.', value: 'NCKH8' },
-  { label: 'Giáo viên giỏi cấp tỉnh/thành hoặc tương đương.', value: 'NCKH9' },
-  { label: 'Các thành tích hoặc giải thưởng nghiên cứu khoa học khác.', value: 'NCKH10' },
-  { label: 'Các loại thành tích khác', value: 'KHAC11' },
+  { label: 'Đề tài NCKH cấp cơ sở hoặc tương đương trở lên và phải có kết quả nghiệm thu từ mức đạt trở lên.', value: 'NCKH6' },
+  { label: 'Thành tích và giải thưởng NCKH khác: Giải khuyến khích sinh viên NCKH cấp Trường hoặc tương đương.', value: 'NCKH7' },
+];
+
+export const OTHER_ACHIEVEMENT_CATEGORIES = [
+  { label: 'Không', value: 'KHAC0' },
+  { label: 'Đạt giải Nhất, Nhì, Ba các kỳ thi Olympic sinh viên toàn quốc hoặc tương đương.', value: 'KHAC1' },
+  { label: 'Giáo viên giỏi cấp Quốc gia hoặc tương đương.', value: 'KHAC2' },
+  { label: 'Đạt giải Nhất, Nhì, Ba các cuộc thi uy tín cấp Quốc gia.', value: 'KHAC3' },
+  { label: 'Giáo viên giỏi cấp Tỉnh/Thành hoặc tương đương.', value: 'KHAC4' },
+  { label: 'Giáo viên chủ nhiệm giỏi cấp Tỉnh/Thành.', value: 'KHAC5' },
+  { label: 'Chiến sĩ thi đua cấp Bộ, các cơ quan ngang Bộ trở lên.', value: 'KHAC6' },
+  { label: 'Chiến sĩ thi đua cấp Tỉnh/Thành.', value: 'KHAC7' },
+  { label: 'Đạt giải Nhất, Nhì, Ba các cuộc thi uy tín cấp Tỉnh/Thành.', value: 'KHAC8' },
+  { label: 'Bằng khen của TW Đoàn hoặc tương đương.', value: 'KHAC9' },
+  { label: 'Bằng khen của Hội Sinh viên Việt Nam hoặc tương đương.', value: 'KHAC10' },
+  { label: 'Giấy chứng nhận sinh viên 05 tốt cấp TW hoặc tương đương.', value: 'KHAC11' },
+  { label: 'Bằng khen của UBND Tỉnh/Thành hoặc tương đương.', value: 'KHAC12' },
+  { label: 'Bằng khen cấp Bộ hoặc tương đương.', value: 'KHAC13' },
+  { label: 'Sáng kiến kinh nghiệm cấp Bộ hoặc tương đương.', value: 'KHAC14' },
+  { label: 'Sáng kiến kinh nghiệm cấp Tỉnh/Thành hoặc tương đương.', value: 'KHAC15' },
+  { label: 'Giáo viên dạy giỏi cấp Quận/Huyện hoặc tương đương.', value: 'KHAC16' },
+  { label: 'Giáo viên chủ nhiệm giỏi cấp Quận/Huyện.', value: 'KHAC17' },
+  { label: 'Giấy khen (hoặc Bằng khen) của Tỉnh/Thành Đoàn hoặc tương đương.', value: 'KHAC18' },
+  { label: 'Giấy chứng nhận sinh viên 05 tốt cấp Tỉnh/Thành.', value: 'KHAC19' },
+  { label: 'Giấy khen (hoặc Bằng khen) của Hội Sinh viên Việt Nam Tỉnh/Thành hoặc tương đương.', value: 'KHAC20' },
+  { label: 'Giấy khen cấp Sở hoặc tương đương.', value: 'KHAC21' },
+  { label: 'Giấy khen của UBND Quận/Huyện hoặc tương đương.', value: 'KHAC22' },
 ];

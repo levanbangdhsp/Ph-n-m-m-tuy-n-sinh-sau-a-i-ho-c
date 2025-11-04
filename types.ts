@@ -57,7 +57,8 @@ export interface ApplicationFormData {
   languageCertDate: string;
 
   // Section V
-  bonusPoints: string;
+  researchAchievements: string;
+  otherAchievements: string;
   // Section VI
   priorityCategory: string;
   // Section VII

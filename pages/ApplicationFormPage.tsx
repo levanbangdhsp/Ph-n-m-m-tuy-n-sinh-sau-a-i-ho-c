@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, ApplicationFormData } from '../types';
 import RadioGroup from '../components/RadioGroup';
 import Alert from '../components/Alert';
-import { NATIONALITIES, GENDERS, MAJORS_DATA, DEGREE_CLASSIFICATIONS, GRADUATION_SYSTEMS, LANGUAGES, LANGUAGE_CERT_TYPES, TRAINING_FACILITIES, CITIES, ETHNICITIES, PRIORITY_CATEGORIES, SCHOLARSHIP_POLICIES, BONUS_POINTS_CATEGORIES } from '../constants';
+import { NATIONALITIES, GENDERS, MAJORS_DATA, DEGREE_CLASSIFICATIONS, GRADUATION_SYSTEMS, LANGUAGES, LANGUAGE_CERT_TYPES, TRAINING_FACILITIES, CITIES, ETHNICITIES, PRIORITY_CATEGORIES, SCHOLARSHIP_POLICIES, RESEARCH_ACHIEVEMENT_CATEGORIES, OTHER_ACHIEVEMENT_CATEGORIES } from '../constants';
 import AcademicCapIcon from '../components/icons/AcademicCapIcon';
 import Footer from '../components/Footer';
 
@@ -49,7 +49,8 @@ const keyToHeaderMap: { [key: string]: string } = {
     languageCertIssuer: 'Trường cấp bằng NN',
     languageScore: 'Điểm NN',
     languageCertDate: 'Ngày cấp NN',
-    bonusPoints: 'Nghiên cứu khoa học',
+    researchAchievements: 'Nghiên cứu khoa học',
+    otherAchievements: 'Thành tích khác',
     priorityCategory: 'Ưu tiên',
     scholarshipPolicy: 'Học bổng',
 };
@@ -70,15 +71,13 @@ const languageReverseMap = createReverseMap(LANGUAGES);
 const languageCertTypeReverseMap = createReverseMap(LANGUAGE_CERT_TYPES);
 const priorityCategoryReverseMap = createReverseMap(PRIORITY_CATEGORIES);
 const scholarshipReverseMap = createReverseMap(SCHOLARSHIP_POLICIES);
-const bonusPointsReverseMap = createReverseMap(BONUS_POINTS_CATEGORIES);
+const researchAchievementsReverseMap = createReverseMap(RESEARCH_ACHIEVEMENT_CATEGORIES);
+const otherAchievementsReverseMap = createReverseMap(OTHER_ACHIEVEMENT_CATEGORIES);
 
 scholarshipReverseMap['0'] = 'Không';
 scholarshipReverseMap['M100'] = 'Miễn 100%';
 scholarshipReverseMap['G75'] = 'Giảm 75%';
 scholarshipReverseMap['G50'] = 'Giảm 50%';
-
-bonusPointsReverseMap['Không'] = 'NCKH0';
-
 
 const mapOrientationFromSheet = (value: string): 'research' | 'applied' | '' => {
     if (value === 'Nghiên cứu') return 'research';
@@ -140,7 +139,8 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     languageCertIssuer: '',
     languageScore: '',
     languageCertDate: '',
-    bonusPoints: 'NCKH0',
+    researchAchievements: 'NCKH0',
+    otherAchievements: 'KHAC0',
     priorityCategory: '0',
     scholarshipPolicy: 'Không',
   };
@@ -279,8 +279,19 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                             processedValue = priorityCategoryReverseMap[rawValue] || rawValue.toString();
                         } else if (key === 'scholarshipPolicy') {
                             processedValue = scholarshipReverseMap[rawValue] || rawValue.toString();
-                        } else if (key === 'bonusPoints') {
-                            processedValue = bonusPointsReverseMap[rawValue] || rawValue.toString();
+                        } else if (key === 'researchAchievements') {
+                            const allAchievementsReverseMap = {...researchAchievementsReverseMap, ...otherAchievementsReverseMap};
+                            const mappedValue = allAchievementsReverseMap[rawValue] || rawValue.toString();
+                            if (RESEARCH_ACHIEVEMENT_CATEGORIES.some(o => o.value === mappedValue)) {
+                                processedValue = mappedValue;
+                            } else if (OTHER_ACHIEVEMENT_CATEGORIES.some(o => o.value === mappedValue)) {
+                                (newFormData as any)['otherAchievements'] = mappedValue;
+                                processedValue = 'NCKH0'; // Default for research.
+                            } else {
+                                processedValue = rawValue.toString(); // Fallback
+                            }
+                        } else if (key === 'otherAchievements') {
+                            processedValue = otherAchievementsReverseMap[rawValue] || rawValue.toString();
                         } else if (key.includes('Orientation')) {
                             processedValue = mapOrientationFromSheet(rawValue.toString());
                         } else if (key === 'dob' || key === 'idCardIssueDate' || key === 'languageCertDate') {
@@ -395,7 +406,8 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         { key: 'graduationSystem', label: 'Hệ tốt nghiệp' },
         { key: 'supplementaryCert', label: 'Giấy chứng nhận hoàn thành bổ sung kiến thức' },
         { key: 'language', label: 'Ngoại ngữ' },
-        { key: 'bonusPoints', label: 'Thông tin về điểm thưởng' },
+        { key: 'researchAchievements', label: 'Thành tích và giải thưởng nghiên cứu khoa học' },
+        { key: 'otherAchievements', label: 'Các thành tích khác' },
         { key: 'priorityCategory', label: 'Thông tin về đối tượng ưu tiên' },
         { key: 'scholarshipPolicy', label: 'Chính sách học bổng' },
     ];
@@ -458,7 +470,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     });
 
     const isLowGraduation = ['TB', 'TBK', 'KXL'].includes(formData.degreeClassification);
-    const hasNoQualifyingPaper = !['NCKH3', 'NCKH4', 'NCKH5'].includes(formData.bonusPoints);
+    const hasNoQualifyingPaper = !['NCKH3', 'NCKH4', 'NCKH5'].includes(formData.researchAchievements);
     const researchOrientationError = "Nếu Bạn tốt nghiệp loại Trung bình hoặc Trung bình khá và chọn định hướng Nghiên cứu, bạn phải có bài báo khoa học.";
 
     if (isLowGraduation && hasNoQualifyingPaper) {
@@ -592,7 +604,8 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         'Ngày cấp CCCD': formData.idCardIssueDate,
         'Nơi cấp CCCD': formData.idCardIssuePlace,
         'Ưu tiên': formData.priorityCategory,
-        'Nghiên cứu khoa học': formData.bonusPoints,
+        'Nghiên cứu khoa học': formData.researchAchievements,
+        'Thành tích khác': formData.otherAchievements, // Đảm bảo dữ liệu từ mục 'Các thành tích khác' được gửi đi
         'Nguyện vọng 1': formData.firstChoiceMajor,
         'Định hướng NV1': mapOrientation(formData.firstChoiceOrientation),
         'Nguyện vọng 2': isLimitedFacility ? '' : formData.secondChoiceMajor,
@@ -664,7 +677,8 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     const getLanguageLabel = (value: string) => LANGUAGES.find(o => o.value === value)?.label || value || '';
     const getLanguageCertLabel = (value: string) => LANGUAGE_CERT_TYPES.find(o => o.value === value)?.label || value || '';
     const getPriorityLabel = (value: string) => PRIORITY_CATEGORIES.find(o => o.value === value)?.label || value || '';
-    const getBonusPointsLabel = (value: string) => BONUS_POINTS_CATEGORIES.find(o => o.value === value)?.label || value || '';
+    const getResearchAchievementLabel = (value: string) => RESEARCH_ACHIEVEMENT_CATEGORIES.find(o => o.value === value)?.label || value || '';
+    const getOtherAchievementLabel = (value: string) => OTHER_ACHIEVEMENT_CATEGORIES.find(o => o.value === value)?.label || value || '';
 
     const numberToVietnameseWords = (numStr: string): string => {
         if (!numStr || typeof numStr !== 'string' || !numStr.trim()) return '';
@@ -916,11 +930,12 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
 
           <div class="section-title">V. Thông tin về điểm thưởng</div>
           <div class="section-content">
-            <div>Thành tích và giải thưởng nghiên cứu khoa học: <span class="data">${getBonusPointsLabel(formData.bonusPoints)}</span></div>
+            <p>1. Thành tích và giải thưởng nghiên cứu khoa học: <span class="data">${getResearchAchievementLabel(formData.researchAchievements)}</span></p>
             <div>Trong đó: 
                 ${uncheckedBox} <span class="checkbox-label">Tác giả chính hoặc chủ nhiệm đề tài</span>
                 ${uncheckedBox} <span class="checkbox-label">Đồng tác giả hoặc thành viên đề tài</span>
             </div>
+            <p>2. Các thành tích khác: <span class="data">${getOtherAchievementLabel(formData.otherAchievements)}</span></p>
           </div>
 
           <div class="section-title">VI. Thông tin về đối tượng ưu tiên: <span class="data">${getPriorityLabel(formData.priorityCategory)}</span></div>
@@ -1104,9 +1119,56 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                 </div>
             </div>
             
-            <SelectField label="V. Thông tin về điểm thưởng (nếu có)" id="bonusPoints" name="bonusPoints" value={formData.bonusPoints} onChange={handleChange} options={BONUS_POINTS_CATEGORIES} required error={errors.bonusPoints} />
-            <SelectField label="VI. Thông tin về đối tượng ưu tiên (nếu có)" id="priorityCategory" name="priorityCategory" value={formData.priorityCategory} onChange={handleChange} options={PRIORITY_CATEGORIES} required error={errors.priorityCategory} />
-            <SelectField label="VII. Chính sách học bổng (nếu có)" id="scholarshipPolicy" name="scholarshipPolicy" value={formData.scholarshipPolicy} onChange={handleChange} options={SCHOLARSHIP_POLICIES} required error={errors.scholarshipPolicy} />
+            <div className="border-b pb-6">
+                <h2 className="text-xl font-semibold text-gray-700 mb-4">V. Thông tin về điểm thưởng (nếu có) *</h2>
+                <div className="pl-4 md:pl-6 space-y-6">
+                    <SelectField 
+                        label="1. Thành tích và giải thưởng nghiên cứu khoa học" 
+                        id="researchAchievements" 
+                        name="researchAchievements" 
+                        value={formData.researchAchievements} 
+                        onChange={handleChange} 
+                        options={RESEARCH_ACHIEVEMENT_CATEGORIES} 
+                        required error={errors.researchAchievements} 
+                    />
+                    <SelectField 
+                        label="2. Các thành tích khác" 
+                        id="otherAchievements" 
+                        name="otherAchievements" 
+                        value={formData.otherAchievements} 
+                        onChange={handleChange} 
+                        options={OTHER_ACHIEVEMENT_CATEGORIES} 
+                        required 
+                        error={errors.otherAchievements} 
+                    />
+                </div>
+            </div>
+
+            <div className="border-b pb-6">
+                <h2 className="text-xl font-semibold text-gray-700 mb-4">VI. Thông tin về đối tượng ưu tiên (nếu có) *</h2>
+                <SelectField 
+                    label="Đối tượng ưu tiên" 
+                    id="priorityCategory" 
+                    name="priorityCategory" 
+                    value={formData.priorityCategory} 
+                    onChange={handleChange} 
+                    options={PRIORITY_CATEGORIES} 
+                    required error={errors.priorityCategory} 
+                />
+            </div>
+            
+            <div>
+                <h2 className="text-xl font-semibold text-gray-700 mb-4">VII. Chính sách học bổng (nếu có) *</h2>
+                <SelectField 
+                    label="Chính sách học bổng" 
+                    id="scholarshipPolicy" 
+                    name="scholarshipPolicy" 
+                    value={formData.scholarshipPolicy} 
+                    onChange={handleChange} 
+                    options={SCHOLARSHIP_POLICIES} 
+                    required error={errors.scholarshipPolicy} 
+                />
+            </div>
 
 
             <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
