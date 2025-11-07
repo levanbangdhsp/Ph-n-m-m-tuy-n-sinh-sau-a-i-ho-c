@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { User } from '../types';
-
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7w4xs_00awOzkc5ZAOIxjcRIhy-dCeVB2wvysWzrHVVtJ4Am6jQ4rjC-cnhs0HRYs/exec';
+import { SCRIPT_URL } from '../constants';
 
 export const useMockAuth = () => {
   const [loading, setLoading] = useState(false);
@@ -23,6 +22,12 @@ export const useMockAuth = () => {
 
   const register = async (fullName: string, email: string, phone: string, password: string): Promise<{ success: boolean; message: string }> => {
     setLoading(true);
+    
+    // Lấy ngày giờ hệ thống và định dạng thành chuỗi 'DD/MM/YYYY HH:mm:ss'
+    // Thêm dấu nháy đơn (') ở đầu để đảm bảo Google Sheet lưu dưới dạng văn bản thuần túy.
+    const now = new Date();
+    const timestamp = `'${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
     const payload = {
       action: 'register',
       sheetName: 'UserName',
@@ -30,16 +35,17 @@ export const useMockAuth = () => {
       email,
       phone: `'${phone.trim()}`,
       password,
+      // Thêm timestamp để ghi lại thời điểm đăng ký
+      'Thời gian': timestamp,
     };
 
     try {
       const response = await fetch(getUrlWithCacheBuster(), {
         method: 'POST',
         cache: 'no-cache',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload),
+        redirect: 'follow',
       });
 
       if (!response.ok) {
@@ -81,10 +87,9 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), {
         method: 'POST',
         cache: 'no-cache',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload),
+        redirect: 'follow',
       });
 
       if (!response.ok) {
@@ -120,10 +125,9 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), { 
         method: 'POST', 
         cache: 'no-cache',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: JSON.stringify(payload), 
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        redirect: 'follow',
       });
       if (!response.ok) throw new Error('Network error');
       const result = await processResponse(response);
@@ -143,10 +147,9 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), { 
         method: 'POST', 
         cache: 'no-cache',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: JSON.stringify(payload), 
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        redirect: 'follow',
       });
       if (!response.ok) throw new Error('Network error');
       const result = await processResponse(response);
@@ -166,10 +169,9 @@ export const useMockAuth = () => {
       const response = await fetch(getUrlWithCacheBuster(), { 
         method: 'POST', 
         cache: 'no-cache',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: JSON.stringify(payload), 
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        redirect: 'follow',
       });
       if (!response.ok) throw new Error('Network error');
       const result = await processResponse(response);

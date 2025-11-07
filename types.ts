@@ -23,10 +23,28 @@ export interface TimelineEvent {
     current: boolean;
 }
 
+export interface ApplicationReviewDetails {
+  graduationScore: number;
+  hasResearchBonus: boolean;
+  hasOtherAchievementsBonus: boolean;
+  priorityScore: number;
+  totalScore: number;
+  scholarshipPolicy: string;
+}
+
+export interface AdmissionDetails {
+  admittedMajor: string;
+  admittedOrientation: string;
+}
+
 export interface ApplicationStatusData {
   status: ApplicationStatusEnum;
   details: string;
   timeline: TimelineEvent[];
+  missingDocuments?: string[];
+  reviewDetails?: ApplicationReviewDetails;
+  admissionResult?: 'Trúng tuyển' | 'Không trúng tuyển' | 'Chưa có';
+  admissionDetails?: AdmissionDetails;
 }
 
 
@@ -87,4 +105,12 @@ export interface ApplicationFormData {
   priorityCategory: string;
   // Section VII
   scholarshipPolicy: string;
+
+  // Section VIII (File Links)
+  linkAnhThe: string;
+  linkBangTotNghiep: string;
+  linkBangDiem: string;
+  linkChungChiNN: string;
+  linkUuTien: string;
+  linkNCKH: string;
 }

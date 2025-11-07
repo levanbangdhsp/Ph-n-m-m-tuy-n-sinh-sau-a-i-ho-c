@@ -46,7 +46,7 @@ const App: React.FC = () => {
         return <AuthPage initialPage={currentPage} onLoginSuccess={handleLoginSuccess} navigate={navigate} user={user} onLogout={handleLogout} />;
       case Page.Application:
         if (user) {
-          return <ApplicationFormPage user={user} onLogout={handleLogout} navigateBack={() => navigate(Page.Landing)} />;
+          return <ApplicationFormPage user={user} onLogout={handleLogout} navigateBack={() => navigate(Page.Landing)} navigate={navigate} />;
         }
         // If user is null but page is Application, redirect to Login
         setCurrentPage(Page.Login);

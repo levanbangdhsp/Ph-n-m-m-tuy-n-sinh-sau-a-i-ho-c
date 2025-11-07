@@ -1,3 +1,5 @@
+export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxZIfAFoh3hcaAh21L2dAHVB1aaRfYuYeJOgE9i5mgNb-wWTPyOSfJc3yl682LREMib/exec';
+
 export const GENDERS = ['Nam', 'Nữ', 'Khác'];
 export const NATIONALITIES = ['Việt Nam', 'Lào', 'Campuchia', 'Thái Lan', 'Trung Quốc', 'Nhật Bản', 'Hàn Quốc', 'Khác'];
 

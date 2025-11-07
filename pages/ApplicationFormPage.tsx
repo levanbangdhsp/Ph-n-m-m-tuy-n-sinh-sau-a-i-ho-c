@@ -1,18 +1,18 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { User, ApplicationFormData } from '../types';
+import { User, ApplicationFormData, Page } from '../types';
 import RadioGroup from '../components/RadioGroup';
 import Alert from '../components/Alert';
-import { NATIONALITIES, GENDERS, MAJORS_DATA, DEGREE_CLASSIFICATIONS, GRADUATION_SYSTEMS, LANGUAGES, LANGUAGE_CERT_TYPES, TRAINING_FACILITIES, CITIES, ETHNICITIES, PRIORITY_CATEGORIES, SCHOLARSHIP_POLICIES, RESEARCH_ACHIEVEMENT_CATEGORIES, OTHER_ACHIEVEMENT_CATEGORIES } from '../constants';
+import { SCRIPT_URL, NATIONALITIES, GENDERS, MAJORS_DATA, DEGREE_CLASSIFICATIONS, GRADUATION_SYSTEMS, LANGUAGES, LANGUAGE_CERT_TYPES, TRAINING_FACILITIES, CITIES, ETHNICITIES, PRIORITY_CATEGORIES, SCHOLARSHIP_POLICIES, RESEARCH_ACHIEVEMENT_CATEGORIES, OTHER_ACHIEVEMENT_CATEGORIES } from '../constants';
 import AcademicCapIcon from '../components/icons/AcademicCapIcon';
 import Footer from '../components/Footer';
+import FileUploadField from '../components/FileUploadField';
 
 interface ApplicationFormPageProps {
   user: User;
   onLogout: () => void;
   navigateBack: () => void;
+  navigate: (page: Page) => void;
 }
-
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7w4xs_00awOzkc5ZAOIxjcRIhy-dCeVB2wvysWzrHVVtJ4Am6jQ4rjC-cnhs0HRYs/exec';
 
 const keyToHeaderMap: { [key: string]: string } = {
     fullName: 'Họ và tên',
@@ -34,7 +34,6 @@ const keyToHeaderMap: { [key: string]: string } = {
     thirdChoiceMajor: 'Nguyện vọng 3',
     firstChoiceOrientation: 'Định hướng NV1',
     secondChoiceOrientation: 'Định hướng NV2',
-    // Fix: Corrected a duplicate property name. Changed `secondChoiceOrientation` to `thirdChoiceOrientation`.
     thirdChoiceOrientation: 'Định hướng NV3',
     university: 'Trường tốt nghiệp đại học',
     graduationYear: 'Năm TN',
@@ -53,6 +52,13 @@ const keyToHeaderMap: { [key: string]: string } = {
     otherAchievements: 'Thành tích khác',
     priorityCategory: 'Ưu tiên',
     scholarshipPolicy: 'Học bổng',
+    // New mappings for file links
+    linkAnhThe: 'Link Ảnh thẻ',
+    linkBangTotNghiep: 'Link Bằng tốt nghiệp',
+    linkBangDiem: 'Link Bảng điểm',
+    linkChungChiNN: 'Link Chứng chỉ NN',
+    linkUuTien: 'Link Ưu tiên',
+    linkNCKH: 'Link NCKH và thành tích khác',
 };
 
 const headerToKeyMap: { [key: string]: string } = Object.entries(keyToHeaderMap).reduce((acc, [key, value]) => ({ ...acc, [value]: key }), {});
@@ -104,7 +110,7 @@ const formatDateFromISO = (dateString: string): string => {
   return dateString;
 };
 
-const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogout, navigateBack }) => {
+const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogout, navigateBack, navigate }) => {
   const initialFormState: ApplicationFormData = {
     fullName: user.fullName,
     gender: '',
@@ -143,6 +149,13 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     otherAchievements: 'KHAC0',
     priorityCategory: '0',
     scholarshipPolicy: 'Không',
+    // File links
+    linkAnhThe: '',
+    linkBangTotNghiep: '',
+    linkBangDiem: '',
+    linkChungChiNN: '',
+    linkUuTien: '',
+    linkNCKH: '',
   };
 
   const [formData, setFormData] = useState<ApplicationFormData>(initialFormState);
@@ -201,7 +214,6 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     try {
       return JSON.parse(textResult);
     } catch (e) {
-      // If parsing fails, it's not a valid JSON. Return it as an error message.
       return { status: 'error', success: false, message: textResult || 'Lỗi không xác định từ máy chủ.' };
     }
   };
@@ -237,9 +249,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
             const response = await fetch(getUrlWithCacheBuster(), {
                 method: 'POST',
                 cache: 'no-cache',
-                headers: {
-                  'Content-Type': 'text/plain;charset=utf-8',
-                },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(payload),
             });
             
@@ -255,9 +265,9 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
 
                 for (const header in sheetData) {
                     const key = headerToKeyMap[header];
-                    if (key && sheetData[header] !== null && sheetData[header] !== undefined) {
+                    if (key && sheetData[header] !== null && sheetData[header] !== undefined && sheetData[header] !== '') {
                         const rawValue = sheetData[header];
-                        let processedValue: string;
+                        let processedValue: any; // Use 'any' to handle mixed types temporarily
     
                         if (key === 'firstChoiceMajor' || key === 'secondChoiceMajor' || key === 'thirdChoiceMajor') {
                             const rawValueStr = rawValue.toString();
@@ -297,8 +307,17 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                         } else if (key === 'dob' || key === 'idCardIssueDate' || key === 'languageCertDate') {
                             processedValue = formatDateFromISO(rawValue.toString());
                         } else {
-                            processedValue = rawValue.toString();
-                            processedValue = processedValue.startsWith("'") ? processedValue.substring(1) : processedValue;
+                            const valueStr = rawValue.toString();
+                            if (valueStr.toUpperCase().startsWith('=HYPERLINK')) {
+                                const urlMatch = valueStr.match(/=HYPERLINK\s*\(\s*"([^"]+)"/i);
+                                if (urlMatch && urlMatch[1]) {
+                                    processedValue = urlMatch[1];
+                                } else {
+                                    processedValue = valueStr;
+                                }
+                            } else {
+                                processedValue = valueStr.startsWith("'") ? valueStr.substring(1) : valueStr;
+                            }
                         }
                         (newFormData as any)[key] = processedValue;
                     }
@@ -351,6 +370,22 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     }
   };
   
+  const handleFileUploadComplete = (field: keyof ApplicationFormData, url: string) => {
+    setFormData(prev => ({
+        ...prev,
+        [field]: url,
+    }));
+  };
+
+  const handleFileDelete = (field: keyof ApplicationFormData) => {
+      setFormData(prev => ({
+          ...prev,
+          [field]: '',
+      }));
+      // Here you might want to add a call to the backend to delete the file from Drive
+      // For now, it just clears the link in the form state.
+  };
+
   const handleNumericBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if ((name === 'gpa10' || name === 'gpa4' || name === 'languageScore') && value) {
@@ -568,69 +603,45 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
         }
         return;
     }
-
-    const now = new Date();
-    const submissionTimestamp = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
     
-    const mapOrientation = (orientation: 'research' | 'applied' | '') => {
-        if (orientation === 'research') return 'Nghiên cứu';
-        if (orientation === 'applied') return 'Ứng dụng';
-        return '';
-    };
-
-    const sheetDataForUpdate = {
-        'Thời gian': `'${submissionTimestamp}`,
-        'Số điện thoại': `'${formData.phone.trim()}`,
-        'Giới tính': formData.gender,
-        'Địa chỉ liên hệ': formData.contactAddress,
-        'Cơ quan công tác': formData.workplace,
-        'Ngày sinh': formData.dob,
-        'Nơi sinh': formData.pob,
-        'Dân tộc': formData.ethnicity,
-        'Quốc tịch': formData.nationality,
-        'Trường tốt nghiệp đại học': formData.university,
-        'Năm TN': formData.graduationYear,
-        'Điểm TB (hệ 10)': formData.gpa10,
-        'Điểm TB (hệ 4)': formData.gpa4,
-        'Loại TN': formData.degreeClassification,
-        'Hệ TN': formData.graduationSystem,
-        'Ngành tốt nghiệp': formData.graduationMajor,
-        'Ngoại ngữ': formData.language,
-        'Loại bằng NN': formData.languageCertType,
-        'Trường cấp bằng NN': formData.languageCertIssuer,
-        'Điểm NN': formData.languageScore,
-        'Ngày cấp NN': formData.languageCertDate,
-        'Số CCCD': `'${formData.idCardNumber.trim()}`,
-        'Ngày cấp CCCD': formData.idCardIssueDate,
-        'Nơi cấp CCCD': formData.idCardIssuePlace,
-        'Ưu tiên': formData.priorityCategory,
-        'Nghiên cứu khoa học': formData.researchAchievements,
-        'Thành tích khác': formData.otherAchievements, // Đảm bảo dữ liệu từ mục 'Các thành tích khác' được gửi đi
-        'Nguyện vọng 1': formData.firstChoiceMajor,
-        'Định hướng NV1': mapOrientation(formData.firstChoiceOrientation),
-        'Nguyện vọng 2': isLimitedFacility ? '' : formData.secondChoiceMajor,
-        'Định hướng NV2': isLimitedFacility ? '' : mapOrientation(formData.secondChoiceOrientation),
-        'Nguyện vọng 3': isLimitedFacility ? '' : formData.thirdChoiceMajor,
-        'Định hướng NV3': isLimitedFacility ? '' : mapOrientation(formData.thirdChoiceOrientation),
-        'Học bổng': formData.scholarshipPolicy,
-        'Bổ sung kiến thức': formData.supplementaryCert,
-        'Cơ sở đào tạo': formData.trainingFacility,
-    };
-
-    const payload = {
+    // Create the payload object to send to the server.
+    const payload: { [key: string]: any } = {
         action: 'submitApplication',
-        sheetName: 'DataDangky',
-        email: user.email,
-        ...sheetDataForUpdate
+        client_version: '2.0.0'
     };
+
+    // Map the form data keys to the Google Sheet header names.
+    for (const key in formData) {
+        const headerName = keyToHeaderMap[key as keyof ApplicationFormData];
+        if (headerName) {
+            let value = formData[key as keyof ApplicationFormData];
+            
+            // Perform necessary data transformations before sending.
+            if (key.endsWith('Orientation')) {
+                value = value === 'research' ? 'Nghiên cứu' : value === 'applied' ? 'Ứng dụng' : '';
+            }
+            if ((key === 'phone' || key === 'idCardNumber') && typeof value === 'string') {
+                value = value ? `'${value.trim()}` : '';
+            }
+            
+            payload[headerName] = value;
+        }
+    }
+    
+    // Lấy ngày giờ hệ thống và định dạng để ghi lại thời gian cập nhật.
+    // Thêm dấu nháy đơn (') ở đầu để đảm bảo Google Sheet lưu dưới dạng văn bản thuần túy.
+    const now = new Date();
+    const timestamp = `'${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    payload['Thời gian'] = timestamp;
+
+    // CRITICAL FIX: Ensure the original 'email' key is present for the server script to find the user row.
+    payload.email = user.email;
 
     try {
         const response = await fetch(getUrlWithCacheBuster(), {
             method: 'POST',
             cache: 'no-cache',
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8',
-            },
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload),
         });
 
@@ -1157,7 +1168,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                 />
             </div>
             
-            <div>
+            <div className="border-b pb-6">
                 <h2 className="text-xl font-semibold text-gray-700 mb-4">VII. Chính sách học bổng (nếu có) *</h2>
                 <SelectField 
                     label="Chính sách học bổng" 
@@ -1170,6 +1181,75 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                 />
             </div>
 
+            {/* NEW FILE UPLOAD SECTION */}
+            <div>
+                <h2 className="text-xl font-semibold text-gray-700 mb-4">VIII. Tài liệu đính kèm</h2>
+                <div className="space-y-6">
+                    <FileUploadField 
+                        user={user}
+                        label="1. Ảnh thẻ 4x6"
+                        description="Yêu cầu ảnh chụp rõ mặt, nền trắng. (Định dạng: JPG, PNG, PDF. Tối đa 5MB)"
+                        targetFileName="AnhThe"
+                        linkColumnHeader="Link Ảnh thẻ"
+                        value={formData.linkAnhThe}
+                        onUploadComplete={(url) => handleFileUploadComplete('linkAnhThe', url)}
+                        onDelete={() => handleFileDelete('linkAnhThe')}
+                    />
+                    <FileUploadField 
+                        user={user}
+                        label="2. Bản scan Bằng tốt nghiệp đại học"
+                        description="File PDF hoặc ảnh chụp rõ nét, có công chứng. (Định dạng: JPG, PNG, PDF. Tối đa 5MB)"
+                        targetFileName="BangTotNghiep"
+                        linkColumnHeader="Link Bằng tốt nghiệp"
+                        value={formData.linkBangTotNghiep}
+                        onUploadComplete={(url) => handleFileUploadComplete('linkBangTotNghiep', url)}
+                        onDelete={() => handleFileDelete('linkBangTotNghiep')}
+                    />
+                    <FileUploadField 
+                        user={user}
+                        label="3. Bản scan Bảng điểm đại học"
+                        description="File PDF hoặc ảnh chụp rõ nét tất cả các trang, có công chứng. (Định dạng: JPG, PNG, PDF. Tối đa 5MB)"
+                        targetFileName="BangDiem"
+                        linkColumnHeader="Link Bảng điểm"
+                        value={formData.linkBangDiem}
+                        onUploadComplete={(url) => handleFileUploadComplete('linkBangDiem', url)}
+                        onDelete={() => handleFileDelete('linkBangDiem')}
+                    />
+                    <FileUploadField 
+                        user={user}
+                        label="4. Bản scan Chứng chỉ ngoại ngữ"
+                        description="File PDF hoặc ảnh chụp rõ nét, có công chứng. (Định dạng: JPG, PNG, PDF. Tối đa 5MB)"
+                        targetFileName="ChungChiNN"
+                        linkColumnHeader="Link Chứng chỉ NN"
+                        value={formData.linkChungChiNN}
+                        onUploadComplete={(url) => handleFileUploadComplete('linkChungChiNN', url)}
+                        onDelete={() => handleFileDelete('linkChungChiNN')}
+                    />
+                    <FileUploadField 
+                        user={user}
+                        label="5. Minh chứng đối tượng ưu tiên (nếu có)"
+                        description="File PDF hoặc ảnh chụp các giấy tờ xác nhận thuộc đối tượng ưu tiên. (Định dạng: JPG, PNG, PDF. Tối đa 5MB)"
+                        targetFileName="UuTien"
+                        linkColumnHeader="Link Ưu tiên"
+                        value={formData.linkUuTien}
+                        onUploadComplete={(url) => handleFileUploadComplete('linkUuTien', url)}
+                        onDelete={() => handleFileDelete('linkUuTien')}
+                    />
+                    <FileUploadField 
+                        user={user}
+                        label="6. Minh chứng NCKH & thành tích khác (nếu có)"
+                        description="Gom các minh chứng vào một file PDF duy nhất để tải lên. (Định dạng: PDF. Tối đa 10MB)"
+                        targetFileName="NCKH_ThanhTich"
+                        linkColumnHeader="Link NCKH và thành tích khác"
+                        value={formData.linkNCKH}
+                        onUploadComplete={(url) => handleFileUploadComplete('linkNCKH', url)}
+                        onDelete={() => handleFileDelete('linkNCKH')}
+                        acceptedFileTypes={['application/pdf']}
+                        maxFileSizeMB={10}
+                    />
+                </div>
+            </div>
+
 
             <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors disabled:bg-green-300">
@@ -1178,7 +1258,10 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                 <button type="button" onClick={handlePrint} className="px-6 py-2 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700 transition-colors">
                 In thông tin
                 </button>
-                <button type="button" onClick={handleQrCodeClick} className="px-6 py-2 bg-gray-800 text-white font-semibold rounded-md hover:bg-black transition-colors">
+                <button type="button" onClick={() => navigate(Page.ApplicationStatus)} className="px-6 py-2 bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700 transition-colors">
+                Xem hồ sơ
+                </button>
+                <button type="button" onClick={handleQrCodeClick} className="px-6 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 transition-colors">
                 QR Code lệ phí
                 </button>
             </div>

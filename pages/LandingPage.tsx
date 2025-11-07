@@ -1,10 +1,11 @@
 import React from 'react';
-import { Page, User } from '../types';
+import { Page, User, ApplicationStatusEnum, ApplicationStatusData } from '../types';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import UserCircleIcon from '../components/icons/UserCircleIcon';
 import ClipboardCheckIcon from '../components/icons/ClipboardCheckIcon';
 import AcademicCapIcon from '../components/icons/AcademicCapIcon';
+import { useApplicationData } from '../hooks/useApplicationData';
 
 
 interface LandingPageProps {
@@ -41,7 +42,45 @@ const ActionCard: React.FC<{
     </div>
 );
 
+const getStatusInfo = (status: ApplicationStatusEnum | undefined) => {
+  if (!status) {
+    return { text: 'Chưa có kết quả', color: 'text-gray-500' };
+  }
+  switch (status) {
+    case ApplicationStatusEnum.VALID:
+      return { text: status, color: 'text-green-600' };
+    case ApplicationStatusEnum.NEEDS_UPDATE:
+      return { text: status, color: 'text-yellow-600' };
+    case ApplicationStatusEnum.INVALID:
+      return { text: status, color: 'text-red-600' };
+    case ApplicationStatusEnum.PROCESSING:
+    case ApplicationStatusEnum.SUBMITTED:
+      return { text: status, color: 'text-blue-600' };
+    case ApplicationStatusEnum.NOT_SUBMITTED:
+       return { text: status, color: 'text-gray-600' };
+    default:
+      return { text: 'Chưa có kết quả', color: 'text-gray-500' };
+  }
+};
+
+const getAdmissionStatusInfo = (result: ApplicationStatusData['admissionResult']) => {
+    switch (result) {
+        case 'Trúng tuyển':
+            return { text: result, color: 'text-green-600' };
+        case 'Không trúng tuyển':
+            return { text: result, color: 'text-red-600' };
+        default:
+            return { text: 'Chưa có kết quả', color: 'text-gray-500' };
+    }
+};
+
+
 const LandingPage: React.FC<LandingPageProps> = ({ navigate, user, onLogout }) => {
+  const { statusData, loading: statusLoading } = useApplicationData(user);
+  
+  const statusInfo = getStatusInfo(statusData?.status);
+  const admissionStatusInfo = getAdmissionStatusInfo(statusData?.admissionResult);
+
   return (
     <div 
       className="flex flex-col min-h-screen bg-white"
@@ -109,16 +148,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ navigate, user, onLogout }) =
                         title="Kết quả xét hồ sơ"
                         description={<>Kiểm tra trạng thái và kết quả<br/>vòng xét duyệt hồ sơ.</>}
                         buttonText="Xem chi tiết"
-                        onButtonClick={() => navigate(Page.ApplicationStatus)}
+                        onButtonClick={() => {
+                            sessionStorage.setItem('statusPageView', 'review');
+                            navigate(Page.ApplicationStatus);
+                        }}
+                        status={statusLoading ? 'Đang tải...' : statusInfo.text}
+                        statusColor={statusInfo.color}
                     />
                     <ActionCard 
-                        icon={<AcademicCapIcon className="w-12 h-12 text-yellow-600" />}
+                        icon={<AcademicCapIcon className="w-12 h-12 text-yellow-500" />}
                         title="Kết quả trúng tuyển"
                         description={<>Xem kết quả cuối cùng<br/>của kỳ xét tuyển.</>}
                         buttonText="Xem kết quả"
-                        onButtonClick={() => alert('Chức năng đang được phát triển.')}
-                        status="Chưa có kết quả"
-                        statusColor="text-gray-500"
+                        onButtonClick={() => {
+                            sessionStorage.setItem('statusPageView', 'admission');
+                            navigate(Page.ApplicationStatus);
+                        }}
+                        status={statusLoading ? 'Đang tải...' : admissionStatusInfo.text}
+                        statusColor={admissionStatusInfo.color}
                     />
                 </div>
             </div>
