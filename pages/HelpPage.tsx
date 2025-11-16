@@ -119,7 +119,9 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
   
   const ImagePlaceholder = ({ src, alt }: { src: string, alt: string }) => (
       <div className="my-6 border rounded-lg overflow-hidden shadow-md bg-gray-50">
-          <img src={src} alt={alt} className="w-full h-auto" />
+          {/* === DÒNG ĐÃ SỬA THEO CÁCH 1 === */}
+          <img src={src} alt={alt} className="w-3/4 h-auto mx-auto" />
+          {/* ================================= */}
           <p className="text-center text-sm text-gray-500 p-2 bg-gray-100"><i>{alt}</i></p>
       </div>
   );
@@ -236,7 +238,7 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                         <li><b>Hồ sơ hợp lệ:</b> Chúc mừng! Hồ sơ của bạn đã hợp lệ. Đây là điều kiện cần để được xét trúng tuyển.</li>
                         <ImagePlaceholder src="/images/trang-thai-hop-le.png" alt="Ví dụ về trạng thái hồ sơ hợp lệ." />
                         <li><b>Kết quả trúng tuyển:</b> Khi có kết quả cuối cùng, trang "Kết quả trúng tuyển" sẽ hiển thị thông báo. Nếu trúng tuyển, hệ thống sẽ ghi rõ Ngành và Định hướng bạn đã trúng tuyển.</li>
-                        <ImagePlaceholder src="/images/ket-qua-trung-tuyen.png" alt="VíV dụ về kết quả trúng tuyển, hiển thị rõ ngành và định hướng." />
+                        <ImagePlaceholder src="/images/ket-qua-trung-tuyen.png" alt="Ví dụ về kết quả trúng tuyển, hiển thị rõ ngành và định hướng." />
                         <li><b>Không trúng tuyển:</b> Mặc dù hồ sơ của bạn hợp lệ, kết quả cuối cùng phụ thuộc vào điểm xét tuyển và chỉ tiêu của ngành. Rất tiếc bạn đã không trúng tuyển đợt này.</li>
                         <ImagePlaceholder src="/images/ket-qua-khong-trung-tuyen.png" alt="Ví dụ về kết quả không trúng tuyển." />
                         <li><b>Hồ sơ không hợp lệ:</b> Rất tiếc, hồ sơ của bạn không hợp lệ. Lý do sẽ được ghi rõ trong thông báo.</li>
