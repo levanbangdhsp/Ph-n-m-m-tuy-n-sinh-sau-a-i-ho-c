@@ -8,6 +8,8 @@ interface InputFieldProps {
   type?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  // Fix: Add onBlur property to support blur events.
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   placeholder?: string;
   required?: boolean;
   // Fix: Add disabled prop to allow disabling the input field.
@@ -20,6 +22,7 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
   type = 'text',
   value,
   onChange,
+  onBlur,
   placeholder,
   required = false,
   disabled = false,
@@ -43,6 +46,7 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
           type={isPasswordField ? (isPasswordVisible ? 'text' : 'password') : type}
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           placeholder={placeholder}
           required={required}
           disabled={disabled}

@@ -26,3 +26,14 @@ export const validatePassword = (password: string): PasswordValidationResult => 
 
   return result;
 };
+
+export const formatFullName = (name: string): string => {
+  if (!name) return '';
+  return name
+    .trim()
+    .toLowerCase()
+    .split(' ')
+    .filter(word => word) // remove empty strings from multiple spaces
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};

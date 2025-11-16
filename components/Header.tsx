@@ -27,6 +27,12 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, navigate, isAuthPage })
 
           {/* Navigation */}
           <nav className="flex items-center gap-2">
+            <button
+                onClick={() => navigate(Page.Help)}
+                className="px-4 py-2 text-sky-700 font-semibold rounded-md hover:bg-sky-200/60 transition-colors text-sm"
+            >
+                Hướng dẫn
+            </button>
             {isAuthPage ? (
               <button
                 onClick={() => navigate(Page.Landing)}
@@ -39,6 +45,14 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, navigate, isAuthPage })
                 <span className="text-slate-600 hidden md:block">
                   Xin chào, <span className="font-semibold">{user.fullName}</span>!
                 </span>
+                {(user.role === 'admin' || user.role === 'sub-admin') && (
+                  <button
+                    onClick={() => navigate(Page.AdminDashboard)}
+                    className="px-4 py-2 bg-slate-600 text-white font-semibold rounded-md hover:bg-slate-700 transition-colors text-sm"
+                  >
+                    Admin
+                  </button>
+                )}
                 <button
                   onClick={onLogout}
                   className="px-4 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 transition-colors text-sm"

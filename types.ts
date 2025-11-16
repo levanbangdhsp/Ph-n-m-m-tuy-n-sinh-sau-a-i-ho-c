@@ -5,6 +5,8 @@ export enum Page {
   ForgotPassword,
   Application,
   ApplicationStatus,
+  AdminDashboard,
+  Help,
 }
 
 export enum ApplicationStatusEnum {
@@ -54,6 +56,8 @@ export interface User {
   email: string;
   phone: string;
   passwordHash: string; // In a real app, never store plain text passwords
+  role: 'applicant' | 'admin' | 'sub-admin';
+  canEdit?: boolean; // Optional: true for write access, false/undefined for read-only
 }
 
 export interface ApplicationFormData {
@@ -107,10 +111,14 @@ export interface ApplicationFormData {
   scholarshipPolicy: string;
 
   // Section VIII (File Links)
+  linkPhieuDangKy: string;
+  linkSoYeuLyLich: string;
+  linkMinhChungLePhi: string;
   linkAnhThe: string;
   linkBangTotNghiep: string;
   linkBangDiem: string;
   linkChungChiNN: string;
+  linkGiayChungNhanBSKT: string;
   linkUuTien: string;
   linkNCKH: string;
 }

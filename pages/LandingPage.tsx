@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Page, User, ApplicationStatusEnum, ApplicationStatusData } from '../types';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -76,7 +76,29 @@ const getAdmissionStatusInfo = (result: ApplicationStatusData['admissionResult']
 
 
 const LandingPage: React.FC<LandingPageProps> = ({ navigate, user, onLogout }) => {
-  const { statusData, loading: statusLoading } = useApplicationData(user);
+  const [targetUser, setTargetUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const userToEditJson = sessionStorage.getItem('userToEdit');
+    // Determine which user's data to display.
+    // If an admin is viewing a specific applicant, use that applicant's data.
+    if (user && (user.role === 'admin' || user.role === 'sub-admin') && userToEditJson) {
+      const userToEdit = JSON.parse(userToEditJson);
+      setTargetUser({
+        id: userToEdit.id,
+        email: userToEdit.email,
+        fullName: userToEdit.hoTen, // hoTen is from the Candidate interface
+        phone: userToEdit.phone,
+        role: 'applicant', // Context is viewing an applicant
+        passwordHash: '', // Not needed
+      });
+    } else {
+      // Otherwise, use the currently logged-in user.
+      setTargetUser(user);
+    }
+  }, [user]);
+
+  const { statusData, loading: statusLoading } = useApplicationData(targetUser);
   
   const statusInfo = getStatusInfo(statusData?.status);
   const admissionStatusInfo = getAdmissionStatusInfo(statusData?.admissionResult);
@@ -173,7 +195,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ navigate, user, onLogout }) =
         )}
       </main>
 
-      <Footer />
+      <Footer navigate={navigate} />
     </div>
   );
 };

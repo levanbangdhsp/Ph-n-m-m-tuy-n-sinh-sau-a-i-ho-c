@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { User } from '../types';
-import { SCRIPT_URL } from '../constants';
+import { apiCall } from '../hooks/useMockAuth';
 import UploadIcon from './icons/UploadIcon';
 import TrashIcon from './icons/TrashIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
@@ -20,6 +20,7 @@ interface FileUploadFieldProps {
   onDelete: () => void;
   acceptedFileTypes?: string[];
   maxFileSizeMB?: number;
+  error?: string;
 }
 
 const FileUploadField: React.FC<FileUploadFieldProps> = ({
@@ -33,13 +34,12 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
   onDelete,
   acceptedFileTypes = ['image/jpeg', 'image/png', 'application/pdf'],
   maxFileSizeMB = 5,
+  error,
 }) => {
   const [status, setStatus] = useState<UploadStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const getUrlWithCacheBuster = () => `${SCRIPT_URL}?v=${new Date().getTime()}`;
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -83,14 +83,7 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
       };
 
       try {
-        const response = await fetch(getUrlWithCacheBuster(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload),
-          redirect: 'follow',
-        });
-
-        const result = await response.json();
+        const result = await apiCall(payload);
         if (result.success) {
           setStatus('success');
           onUploadComplete(result.fileUrl);
@@ -98,9 +91,9 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
           setStatus('error');
           setErrorMessage(result.message || 'Lỗi không xác định từ máy chủ.');
         }
-      } catch (error) {
+      } catch (error: any) {
         setStatus('error');
-        setErrorMessage('Lỗi kết nối. Vui lòng kiểm tra mạng và thử lại.');
+        setErrorMessage(error.message || 'Lỗi kết nối. Vui lòng kiểm tra mạng và thử lại.');
         console.error('Upload error:', error);
       }
     };
@@ -127,7 +120,7 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
   };
 
   return (
-    <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+    <div className={`p-4 rounded-md border ${error && !value ? 'border-red-400 bg-red-50' : 'bg-gray-50 border-gray-200'}`}>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div className="flex-grow mb-4 md:mb-0">
           <p className="font-semibold text-gray-800">{label}</p>
@@ -187,6 +180,10 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
                 <p className="text-xs text-red-600 mt-1 pl-7">{errorMessage}</p>
             )}
          </div>
+      )}
+
+      {error && !value && (
+        <p className="text-sm text-red-600 font-semibold mt-2">{error}</p>
       )}
 
     </div>

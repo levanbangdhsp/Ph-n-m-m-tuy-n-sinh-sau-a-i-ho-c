@@ -3,7 +3,7 @@ import { Page } from '../types';
 import InputField from './InputField';
 import { useMockAuth } from '../hooks/useMockAuth';
 import Alert from './Alert';
-import { validatePassword, PasswordValidationResult } from '../utils/validation';
+import { validatePassword, PasswordValidationResult, formatFullName } from '../utils/validation';
 import PasswordStrengthIndicator from './PasswordStrengthIndicator';
 
 interface RegisterFormProps {
@@ -35,6 +35,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigate }) => {
       setPasswordValidation(null);
     }
   }, [password]);
+
+  const handleFullNameBlur = () => {
+    setFullName(prev => formatFullName(prev));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,7 +128,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigate }) => {
         {message && <Alert type={messageType} message={message} onClose={() => setMessage('')} />}
         
         <form onSubmit={handleSubmit} noValidate>
-          <InputField ref={fullNameRef} id="fullName" label="Họ tên:" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+          <InputField ref={fullNameRef} id="fullName" label="Họ tên:" value={fullName} onChange={(e) => setFullName(e.target.value)} onBlur={handleFullNameBlur} required />
           <InputField ref={emailRef} id="email" label="Email:" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <InputField ref={passwordRef} id="password" label="Mật khẩu:" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           

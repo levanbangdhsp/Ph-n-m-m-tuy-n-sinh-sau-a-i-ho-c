@@ -38,7 +38,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ initialPage, onLoginSuccess, naviga
           {renderForm()}
         </div>
       </main>
-      <Footer />
+      <Footer navigate={navigate} />
     </div>
   );
 };

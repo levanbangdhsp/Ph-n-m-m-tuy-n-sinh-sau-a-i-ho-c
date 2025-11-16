@@ -9,12 +9,46 @@ import InformationCircleIcon from '../components/icons/InformationCircleIcon';
 import XCircleIcon from '../components/icons/XCircleIcon';
 import AcademicCapIcon from '../components/icons/AcademicCapIcon';
 
+const documentLabelToKeyMap: { [label: string]: string } = {
+  '1. Phiếu đăng ký dự tuyển': 'linkPhieuDangKy',
+  '2. Sơ yếu lý lịch': 'linkSoYeuLyLich',
+  '3. Minh chứng về nộp lệ phí dự tuyển': 'linkMinhChungLePhi',
+  '4. Ảnh thẻ 4x6': 'linkAnhThe',
+  '5. Bản scan Bằng tốt nghiệp và Bảng điểm đại học': 'linkBangVaBangDiem_combined',
+  '6. Bản scan Chứng chỉ ngoại ngữ': 'linkChungChiNN',
+  '7. Giấy chứng nhận hoàn thành bổ sung kiến thức': 'linkGiayChungNhanBSKT',
+  '8. Minh chứng đối tượng ưu tiên': 'linkUuTien',
+  '9. Minh chứng NCKH & thành tích khác': 'linkNCKH',
+};
+
 const ApplicationStatusPage: React.FC<{
   user: User;
   onLogout: () => void;
   navigate: (page: Page) => void;
 }> = ({ user, onLogout, navigate }) => {
-  const { statusData, loading, error, refetch } = useApplicationData(user);
+  const [targetUser, setTargetUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const userToEditJson = sessionStorage.getItem('userToEdit');
+    // Check if the logged-in user is an admin and is viewing a specific applicant's status.
+    if ((user.role === 'admin' || user.role === 'sub-admin') && userToEditJson) {
+      const userToEdit = JSON.parse(userToEditJson);
+      // Construct a valid User object for the data fetching hook.
+      setTargetUser({
+        id: userToEdit.id,
+        email: userToEdit.email,
+        fullName: userToEdit.hoTen, // hoTen is the property name in the Candidate interface
+        phone: userToEdit.phone,
+        role: 'applicant', // The context is that we are viewing an applicant's record
+        passwordHash: '', // Not needed for this operation
+      });
+    } else {
+      // If not an admin viewing a profile, the user is viewing their own status.
+      setTargetUser(user);
+    }
+  }, [user]);
+
+  const { statusData, loading, error, refetch } = useApplicationData(targetUser);
   const [view, setView] = useState<'review' | 'admission'>('review');
 
   useEffect(() => {
@@ -23,6 +57,18 @@ const ApplicationStatusPage: React.FC<{
       setView(storedView);
     }
   }, []);
+
+  const handleUpdateClick = () => {
+    sessionStorage.setItem('targetStep', '5');
+    if (statusData?.missingDocuments && statusData.missingDocuments.length > 0) {
+        const firstMissingDocLabel = statusData.missingDocuments[0];
+        const fieldKey = documentLabelToKeyMap[firstMissingDocLabel];
+        if (fieldKey) {
+            sessionStorage.setItem('scrollToField', fieldKey);
+        }
+    }
+    navigate(Page.Application);
+  };
 
   const pageConfig = {
     review: {
@@ -112,7 +158,7 @@ const ApplicationStatusPage: React.FC<{
               )}
                {statusData!.status === ApplicationStatusEnum.NEEDS_UPDATE && (
                   <button
-                    onClick={() => navigate(Page.Application)}
+                    onClick={handleUpdateClick}
                     className="mt-3 px-4 py-2 bg-yellow-500 text-white font-semibold rounded-md hover:bg-yellow-600 transition-colors text-sm"
                   >
                     Cập nhật hồ sơ ngay
@@ -279,6 +325,12 @@ const ApplicationStatusPage: React.FC<{
                     </span>
                 </div>
                 <nav className="flex items-center gap-2">
+                    <button
+                        onClick={() => navigate(Page.Help)}
+                        className="px-4 py-2 text-sky-700 font-semibold rounded-md hover:bg-sky-200/60 transition-colors text-sm"
+                    >
+                        Hướng dẫn
+                    </button>
                     <span className="text-slate-600 hidden md:block">
                     Xin chào, <span className="font-semibold">{user.fullName}</span>!
                     </span>
@@ -288,6 +340,14 @@ const ApplicationStatusPage: React.FC<{
                         >
                     Về Trang chủ
                     </button>
+                    {(user.role === 'admin' || user.role === 'sub-admin') && (
+                        <button
+                            onClick={() => navigate(Page.AdminDashboard)}
+                            className="px-4 py-2 bg-slate-600 text-white font-semibold rounded-md hover:bg-slate-700 transition-colors text-sm"
+                        >
+                            Admin
+                        </button>
+                    )}
                     <button
                         onClick={onLogout}
                         className="px-4 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 transition-colors text-sm"
@@ -316,7 +376,8 @@ const ApplicationStatusPage: React.FC<{
           </div>
         </div>
       </main>
-      <Footer />
+      {/* Fix: Pass the required 'navigate' prop to the Footer component. */}
+      <Footer navigate={navigate} />
     </div>
   );
 };

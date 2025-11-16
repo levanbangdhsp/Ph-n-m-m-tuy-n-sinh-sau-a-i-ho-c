@@ -1,15 +1,30 @@
-
 import React from 'react';
+import { Page } from '../types';
 
-const Footer: React.FC = () => {
+interface FooterProps {
+  navigate: (page: Page) => void;
+}
+
+const Footer: React.FC<FooterProps> = ({ navigate }) => {
   return (
     <footer className="bg-gray-100 text-gray-800 mt-auto border-t">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="text-center">
           <p className="text-sm">
-            &copy; {new Date().getFullYear()} Cổng thông tin tuyển sinh Sau đại học Trường Đại học Sư phạm Thành phố Hồ Chí Minh. Bảo lưu mọi quyền.
+            &copy; {new Date().getFullYear()} Cổng thông tin tuyển sinh Sau đại học Trường Đại học Sư phạm Thành phố Hồ Chi Minh. Bảo lưu mọi quyền.
           </p>
           <p className="text-sm mt-2">
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(Page.Help);
+              }}
+              className="text-sky-600 hover:text-sky-700 hover:underline"
+            >
+              Hướng dẫn sử dụng
+            </a>
+            <span className="mx-1">|</span>
             <span>Liên hệ hỗ trợ: </span>
             <a href="http://hcmue.edu.vn" target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:text-sky-700 hover:underline">Website: http://hcmue.edu.vn</a>
             <span className="mx-1">|</span>

@@ -1,20 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User, ApplicationStatusData, ApplicationStatusEnum, TimelineEvent } from '../types';
-import { SCRIPT_URL, MAJORS_DATA } from '../constants';
-
-// This is the real script URL
-const getUrlWithCacheBuster = () => {
-  return `${SCRIPT_URL}?v=${new Date().getTime()}`;
-};
-
-const processResponse = async (response: Response) => {
-    const textResult = await response.text();
-    try {
-      return JSON.parse(textResult);
-    } catch (e) {
-      return { status: 'error', success: false, message: textResult || 'Lỗi không xác định từ máy chủ.' };
-    }
-};
+import { MAJORS_DATA } from '../constants';
+import { apiCall } from './useMockAuth';
 
 const formatDate = (dateValue: any): string | null => {
     if (!dateValue) return null;
@@ -47,8 +34,14 @@ export const useApplicationData = (user: User | null) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = useCallback(async () => {
-    if (!user) {
-        setLoading(false);
+    if (!user || !user.id) { // Ensure user and user.id exist
+        // If there's no target user yet, simply wait.
+        // Set loading to false only if we are sure there is no user to fetch.
+        if (user === null) {
+            setLoading(true); // Remain in loading state if user object is pending
+        } else {
+            setLoading(false); // Stop loading if user object is present but invalid
+        }
         return;
     }
 
@@ -56,20 +49,9 @@ export const useApplicationData = (user: User | null) => {
     setError(null);
 
     try {
-      const payload = { action: 'getApplicationData', email: user.email };
-      const response = await fetch(getUrlWithCacheBuster(), {
-          method: 'POST',
-          cache: 'no-cache',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload),
-          redirect: 'follow',
-      });
-
-      if (!response.ok) {
-        throw new Error('Lỗi mạng khi tải dữ liệu.');
-      }
-
-      const result = await processResponse(response);
+      // Send user ID for precise data retrieval
+      const payload = { action: 'getApplicationData', id: user.id, email: user.email };
+      const result = await apiCall(payload);
 
       if (!result.success || !result.data || !result.data[Object.keys(result.data)[0]]) {
         setStatusData({
@@ -117,13 +99,23 @@ export const useApplicationData = (user: User | null) => {
 
       // STEP 1: MANDATORY FILE CHECK (HIGHEST PRIORITY)
       const allDocuments = [
-          { key: 'Link Ảnh thẻ', name: '1. Ảnh thẻ 4x6', isRequired: () => true },
-          { key: 'Link Bằng tốt nghiệp', name: '2. Bản scan Bằng tốt nghiệp đại học', isRequired: () => true },
-          { key: 'Link Bảng điểm', name: '3. Bản scan Bảng điểm đại học', isRequired: () => true },
-          { key: 'Link Chứng chỉ NN', name: '4. Bản scan Chứng chỉ ngoại ngữ', isRequired: () => true },
+          { key: 'Link Phiếu đăng ký dự tuyển', name: '1. Phiếu đăng ký dự tuyển', isRequired: () => true },
+          { key: 'Link Sơ yếu lý lịch', name: '2. Sơ yếu lý lịch', isRequired: () => true },
+          { key: 'Link Minh chứng lệ phí', name: '3. Minh chứng về nộp lệ phí dự tuyển', isRequired: () => true },
+          { key: 'Link Ảnh thẻ', name: '4. Ảnh thẻ 4x6', isRequired: () => true },
+          { key: 'Link Bằng tốt nghiệp', name: '5. Bản scan Bằng tốt nghiệp và Bảng điểm đại học', isRequired: () => true },
+          { key: 'Link Chứng chỉ NN', name: '6. Bản scan Chứng chỉ ngoại ngữ', isRequired: () => true },
+          { 
+              key: 'Link Giấy chứng nhận BSKT', 
+              name: '7. Giấy chứng nhận hoàn thành bổ sung kiến thức', 
+              isRequired: () => {
+                  const bskhKey = findKey('Bổ sung kiến thức');
+                  return !!(bskhKey && data[bskhKey] && data[bskhKey] === 'Có');
+              } 
+          },
           { 
               key: 'Link Ưu tiên', 
-              name: '5. Minh chứng đối tượng ưu tiên', 
+              name: '8. Minh chứng đối tượng ưu tiên', 
               isRequired: () => {
                   const priorityKey = findKey('Ưu tiên');
                   return !!(priorityKey && data[priorityKey] && data[priorityKey] !== '0');
@@ -131,7 +123,7 @@ export const useApplicationData = (user: User | null) => {
           },
           { 
               key: 'Link NCKH và thành tích khác', 
-              name: '6. Minh chứng NCKH & thành tích khác',
+              name: '9. Minh chứng NCKH & thành tích khác',
               isRequired: () => {
                   const researchKey = findKey('Nghiên cứu khoa học');
                   const otherAchievementsKey = findKey('Thành tích khác');
@@ -313,8 +305,11 @@ export const useApplicationData = (user: User | null) => {
   }, [user]);
 
   useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
+    // Only fetch status if a valid user object is present.
+    if (user) {
+      fetchStatus();
+    }
+  }, [fetchStatus, user]);
 
   return { statusData, loading, error, refetch: fetchStatus };
 };
