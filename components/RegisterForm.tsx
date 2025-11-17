@@ -44,18 +44,17 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigate }) => {
     e.preventDefault();
     setMessage('');
     
-    const validationErrorMsg = "Vui lòng điền thông tin đầy đủ vào ô này.";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\d{10}$/;
 
     if (!fullName.trim()) {
-        setMessage(validationErrorMsg);
+        setMessage("Vui lòng điền thông tin đầy đủ vào ô Họ tên.");
         setMessageType('error');
         fullNameRef.current?.focus();
         return;
     }
     if (!email.trim()) {
-        setMessage(validationErrorMsg);
+        setMessage("Vui lòng điền thông tin đầy đủ vào ô Email.");
         setMessageType('error');
         emailRef.current?.focus();
         return;
@@ -67,19 +66,19 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigate }) => {
         return;
     }
     if (!password.trim()) {
-        setMessage(validationErrorMsg);
+        setMessage("Vui lòng điền thông tin đầy đủ vào ô Mật khẩu.");
         setMessageType('error');
         passwordRef.current?.focus();
         return;
     }
     if (!confirmPassword.trim()) {
-        setMessage(validationErrorMsg);
+        setMessage("Vui lòng điền thông tin đầy đủ vào ô Nhập lại mật khẩu.");
         setMessageType('error');
         confirmPasswordRef.current?.focus();
         return;
     }
     if (!phone.trim()) {
-        setMessage(validationErrorMsg);
+        setMessage("Vui lòng điền thông tin đầy đủ vào ô Số điện thoại.");
         setMessageType('error');
         phoneRef.current?.focus();
         return;

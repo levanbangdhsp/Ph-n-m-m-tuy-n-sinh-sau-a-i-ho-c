@@ -23,16 +23,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ navigate, onLoginSuccess }) => {
     e.preventDefault();
     setError('');
 
-    const validationErrorMsg = "Vui lòng điền thông tin đầy đủ vào ô này.";
-
     if (!email.trim()) {
-      setError(validationErrorMsg);
+      setError("Vui lòng điền thông tin đầy đủ vào ô Email.");
       emailRef.current?.focus();
       return;
     }
 
     if (!password.trim()) {
-      setError(validationErrorMsg);
+      setError("Vui lòng điền thông tin đầy đủ vào ô Mật khẩu.");
       passwordRef.current?.focus();
       return;
     }

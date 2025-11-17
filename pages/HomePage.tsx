@@ -4,6 +4,7 @@ import UserCircleIcon from '../components/icons/UserCircleIcon';
 import ClipboardCheckIcon from '../components/icons/ClipboardCheckIcon';
 import AcademicCapIcon from '../components/icons/AcademicCapIcon';
 
+
 interface HomePageProps {
   user: User;
   onLogout: () => void;

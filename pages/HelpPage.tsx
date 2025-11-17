@@ -3,6 +3,8 @@ import { Page, User } from '../types';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
+import ExclamationTriangleIcon from '../components/icons/ExclamationTriangleIcon';
+import InformationCircleIcon from '../components/icons/InformationCircleIcon';
 
 interface HelpPageProps {
   user: User | null;
@@ -117,14 +119,23 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
       );
   };
   
-  const ImagePlaceholder = ({ src, alt }: { src: string, alt: string }) => (
-      <div className="my-6 border rounded-lg overflow-hidden shadow-md bg-gray-50">
-          {/* === DÒNG ĐÃ SỬA THEO CÁCH 1 === */}
-          <img src={src} alt={alt} className="w-3/4 h-auto mx-auto" />
-          {/* ================================= */}
-          <p className="text-center text-sm text-gray-500 p-2 bg-gray-100"><i>{alt}</i></p>
-      </div>
-  );
+  const ImagePlaceholder = ({ src, alt, size = '100%' }: { src: string, alt: string, size?: '50%' | '75%' | '100%' }) => {
+      let containerWidthClass = 'w-full';
+      if (size === '75%') {
+          containerWidthClass = 'lg:w-3/4';
+      } else if (size === '50%') {
+          containerWidthClass = 'lg:w-1/2';
+      }
+
+      return (
+          <div className="my-6 flex justify-center">
+              <div className={`border rounded-lg overflow-hidden shadow-md bg-gray-50 w-full ${containerWidthClass}`}>
+                  <img src={src} alt={alt} className="w-full h-auto" />
+                  <p className="text-center text-sm text-gray-500 p-2 bg-gray-100"><i>{alt}</i></p>
+              </div>
+          </div>
+      );
+  };
 
   const visibleSections = isAdmin ? SECTIONS : SECTIONS.filter(s => s.id !== 'admin-guide' && !s.parent.startsWith('admin-guide'));
 
@@ -169,9 +180,9 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
               <span>Quay lại trang trước</span>
             </button>
 
-            {renderSection('tong-quan', 'Chào mừng đến với Cổng thông tin Tuyển sinh', 0,
+            {renderSection('tong-quan', 'Chào mừng đến với Cổng thông tin Tuyển sinh HCMUE', 0,
               <>
-                <p>Tài liệu này cung cấp hướng dẫn chi tiết về cách sử dụng các tính năng của Cổng thông tin Tuyển sinh Sau đại học. Vui lòng chọn một mục từ thanh điều hướng bên trái để xem chi tiết.</p>
+                <p>Tài liệu này cung cấp hướng dẫn chi tiết về cách sử dụng các tính năng của Cổng thông tin Tuyển sinh Sau đại học HCMUE. Vui lòng chọn một mục từ thanh điều hướng bên trái để xem chi tiết.</p>
                 <p>Nếu bạn gặp bất kỳ khó khăn nào, vui lòng liên hệ với chúng tôi qua thông tin ở cuối trang.</p>
               </>
             )}
@@ -188,7 +199,20 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                         <li>Mật khẩu cần đáp ứng các tiêu chí bảo mật được liệt kê.</li>
                         <li>Nhấn "Đăng ký" để hoàn tất. Hệ thống sẽ gửi thông báo và bạn sẽ được chuyển đến trang đăng nhập.</li>
                     </ol>
-                    <ImagePlaceholder src="/images/dang-ky.png" alt="Giao diện form đăng ký tài khoản." />
+                    <div className="my-6 p-4 rounded-md border-l-4 border-yellow-500 bg-yellow-50 flex items-start gap-4">
+                        <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="font-bold text-yellow-800">Lưu ý quan trọng khi đăng ký hồ sơ</h4>
+                            <p className="mt-1">
+                                Các thông tin này sẽ <strong>không thể thay đổi</strong> sau khi đăng ký để đảm bảo tính xác thực của hồ sơ.
+                            </p>
+                            <ul className="list-disc list-inside mt-2 space-y-1">
+                                <li><strong>Họ và tên:</strong> Vui lòng nhập đầy đủ họ tên bằng tiếng Việt có dấu.</li>
+                                <li><strong>Email và Số điện thoại:</strong> Phải là thông tin chính xác và bạn đang sử dụng thường xuyên. Đây sẽ là kênh liên lạc chính trong suốt quá trình xét tuyển.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <ImagePlaceholder src="/images/dang-ky.png" alt="Giao diện form đăng ký tài khoản." size="50%" />
                 </>
             )}
 
@@ -196,7 +220,7 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                 <>
                     <p>Sau khi có tài khoản, bạn có thể đăng nhập vào hệ thống bằng cách nhấn nút "Đăng nhập" ở trang chủ.</p>
                     <p>Điền Email và Mật khẩu đã đăng ký, sau đó nhấn nút "Đăng nhập".</p>
-                    <ImagePlaceholder src="/images/dang-nhap.png" alt="Giao diện form đăng nhập." />
+                    <ImagePlaceholder src="/images/dang-nhap.png" alt="Giao diện form đăng nhập." size="50%" />
                 </>
             )}
 
@@ -205,10 +229,10 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                     <p>Nếu bạn quên mật khẩu, hãy nhấp vào liên kết "Quên mật khẩu?" trên trang đăng nhập.</p>
                      <ol className="list-decimal list-inside space-y-2">
                         <li><b>Bước 1:</b> Nhập địa chỉ email của bạn và nhấn "Gửi yêu cầu". Một mã OTP sẽ được gửi đến email của bạn.</li>
-                        <ImagePlaceholder src="/images/quen-mat-khau-1.png" alt="Bước 1: Nhập email để lấy lại mật khẩu." />
+                        <ImagePlaceholder src="/images/quen-mat-khau-1.png" alt="Bước 1: Nhập email để lấy lại mật khẩu." size="50%" />
                         <li><b>Bước 2:</b> Kiểm tra hộp thư, nhập mã OTP nhận được và nhấn "Xác thực".</li>
                         <li><b>Bước 3:</b> Tạo mật khẩu mới và xác nhận. Sau khi thành công, bạn sẽ được chuyển về trang đăng nhập.</li>
-                         <ImagePlaceholder src="/images/quen-mat-khau-2.png" alt="Bước 2 & 3: Nhập OTP và đặt mật khẩu mới." />
+                         <ImagePlaceholder src="/images/quen-mat-khau-2.png" alt="Bước 2 & 3: Nhập OTP và đặt mật khẩu mới." size="50%" />
                     </ol>
                 </>
             )}
@@ -218,9 +242,90 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                     <p>Sau khi đăng nhập, bạn sẽ thấy các chức năng chính. Chọn "Đi đến hồ sơ" để bắt đầu.</p>
                      <p>Quy trình nộp hồ sơ gồm 6 bước. Bạn có thể di chuyển giữa các bước bằng cách nhấp vào thanh tiến trình ở trên hoặc dùng nút "Tiếp theo" / "Quay lại".</p>
                     <ImagePlaceholder src="/images/ho-so-cac-buoc.png" alt="Thanh tiến trình các bước nộp hồ sơ." />
-                    <p>Hãy điền đầy đủ và chính xác tất cả thông tin được yêu cầu ở mỗi bước. Ở Bước 5, bạn cần tải lên các tài liệu minh chứng theo yêu cầu.</p>
-                     <p>Bạn có thể nhấn nút <strong>"Lưu nháp"</strong> bất kỳ lúc nào để lưu lại tiến trình và quay lại hoàn thành sau.</p>
+                    
+                    <h4 className="font-bold text-xl mt-6 mb-2">Chi tiết các bước</h4>
+
+                    <h5 className="font-semibold text-lg mt-4">Bước 1: Thông tin cá nhân</h5>
+                    <p>Đây là bước điền các thông tin cơ bản của bạn. Các trường có dấu <span className="text-red-500">*</span> là bắt buộc.</p>
+                    <div className="my-4 p-4 rounded-md border-l-4 border-blue-500 bg-blue-50 flex items-start gap-4">
+                        <InformationCircleIcon className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="font-bold text-blue-800">Lưu ý quan trọng</h4>
+                            <ul className="list-disc list-inside mt-2 space-y-1">
+                                <li><strong>Ngày sinh, Ngày cấp CCCD:</strong> Luôn nhập theo định dạng <code>DD/MM/YYYY</code> (ví dụ: <code>25/12/2000</code>).</li>
+                                <li><strong>Số CCCD:</strong> Phải nhập chính xác 12 chữ số. Hệ thống sẽ tự động kiểm tra định dạng này.</li>
+                                <li><strong>Nơi sinh, Nơi cấp CCCD:</strong> Chọn từ danh sách có sẵn để đảm bảo tính nhất quán.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <ImagePlaceholder src="/images/help-step1.png" alt="Minh họa điền thông tin cá nhân." />
+
+                    <h5 className="font-semibold text-lg mt-4">Bước 2: Thông tin đăng ký dự tuyển</h5>
+                    <p>Chọn cơ sở đào tạo và các nguyện vọng của bạn.</p>
+                    <div className="my-4 p-4 rounded-md border-l-4 border-blue-500 bg-blue-50 flex items-start gap-4">
+                        <InformationCircleIcon className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="font-bold text-blue-800">Lưu ý quan trọng</h4>
+                            <ul className="list-disc list-inside mt-2 space-y-1">
+                                <li>Sau khi chọn "Cơ sở đào tạo", danh sách ngành học sẽ được cập nhật tương ứng.</li>
+                                <li>Nguyện vọng 1 là bắt buộc.</li>
+                                <li>Một số ngành yêu cầu chọn "Định hướng" (Nghiên cứu hoặc Ứng dụng). Nếu ngành bạn chọn chỉ có 1 định hướng, hệ thống sẽ tự động chọn.</li>
+                                <li>Các nguyện vọng (bao gồm cả ngành và định hướng) không được trùng lặp.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <ImagePlaceholder src="/images/help-step2.png" alt="Minh họa đăng ký nguyện vọng." />
+
+                    <h5 className="font-semibold text-lg mt-4">Bước 3: Trình độ học vấn & Ngoại ngữ</h5>
+                    <p>Khai báo thông tin về bằng đại học và năng lực ngoại ngữ.</p>
+                    <div className="my-4 p-4 rounded-md border-l-4 border-blue-500 bg-blue-50 flex items-start gap-4">
+                        <InformationCircleIcon className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="font-bold text-blue-800">Lưu ý quan trọng</h4>
+                            <ul className="list-disc list-inside mt-2 space-y-1">
+                                <li><strong>Điểm TB (hệ 10 và hệ 4), Điểm ngoại ngữ:</strong> Vui lòng sử dụng dấu chấm <code>.</code> cho phần thập phân (ví dụ: <code>8.50</code>), không dùng dấu phẩy <code>,</code>.</li>
+                                <li>Các mục chọn như "Loại tốt nghiệp", "Hệ tốt nghiệp" đã được chuẩn hóa, bạn chỉ cần chọn từ danh sách.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <ImagePlaceholder src="/images/help-step3.png" alt="Minh họa điền trình độ học vấn." />
+
+                    <h5 className="font-semibold text-lg mt-4">Bước 4: Tiêu chí phụ</h5>
+                    <p>Bước này bao gồm các thông tin về: Điểm thưởng (Nghiên cứu khoa học, Thành tích khác), Đối tượng ưu tiên, và Chính sách học bổng.</p>
+                    <div className="my-4 p-4 rounded-md border-l-4 border-blue-500 bg-blue-50 flex items-start gap-4">
+                        <InformationCircleIcon className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="font-bold text-blue-800">Yêu cầu về minh chứng</h4>
+                            <p className="mt-1">
+                                Đối với tất cả các mục trong bước này, <strong>nếu bạn chọn bất kỳ mục nào khác "Không", bạn sẽ cần phải tải lên minh chứng tương ứng ở Bước 5.</strong>
+                            </p>
+                            <p className="mt-1 text-sm">
+                                Ví dụ: Nếu bạn chọn "Con liệt sĩ" ở mục Đối tượng ưu tiên, hệ thống sẽ yêu cầu bạn phải tải lên "Minh chứng đối tượng ưu tiên" ở bước tiếp theo.
+                            </p>
+                        </div>
+                    </div>
+                    <ImagePlaceholder src="/images/help-step4.png" alt="Minh họa chọn các tiêu chí phụ." />
+
+                    <h5 className="font-semibold text-lg mt-4">Bước 5: Tài liệu đính kèm</h5>
+                    <p>Tải lên các file minh chứng theo danh sách.</p>
+                    <div className="my-4 p-4 rounded-md border-l-4 border-blue-500 bg-blue-50 flex items-start gap-4">
+                        <InformationCircleIcon className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="font-bold text-blue-800">Lưu ý quan trọng</h4>
+                            <ul className="list-disc list-inside mt-2 space-y-1">
+                                <li>Mỗi mục tải lên đều có ghi chú về định dạng file (<code>PDF</code>, <code>JPG</code>,...) và dung lượng tối đa cho phép.</li>
+                                <li>Đặc biệt, "Bằng tốt nghiệp và Bảng điểm" cần được gộp chung thành <strong>một file PDF duy nhất</strong>.</li>
+                                <li>Các mục có ghi "(nếu có)" chỉ bắt buộc tải lên khi bạn đã khai báo thông tin tương ứng ở các bước trước (ví dụ: nếu bạn thuộc đối tượng ưu tiên thì phải tải minh chứng ưu tiên).</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <ImagePlaceholder src="/images/help-step5.png" alt="Minh họa giao diện tải file đính kèm." />
+
+                    <h4 className="font-bold text-xl mt-6 mb-2">Chức năng Lưu nháp</h4>
+                    <p>Bạn có thể nhấn nút <strong>"Lưu nháp"</strong> bất kỳ lúc nào để lưu lại tiến trình và quay lại hoàn thành sau.</p>
                     <ImagePlaceholder src="/images/ho-so-luu-nhap.png" alt="Chức năng Lưu nháp và điều hướng." />
+                    
+                    <h5 className="font-semibold text-lg mt-4">Bước 6: Xem lại và Nộp hồ sơ</h5>
                     <p>Sau khi hoàn thành tất cả các bước, hãy đến Bước 6 để xem lại toàn bộ thông tin. Khi đã chắc chắn mọi thứ đều chính xác, nhấn nút <strong>"Nộp hồ sơ"</strong> để gửi hồ sơ đến phòng Sau đại học.</p>
                     <ImagePlaceholder src="/images/ho-so-nop.png" alt="Bước cuối cùng: Xem lại và Nộp hồ sơ." />
                 </>
@@ -232,17 +337,17 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                     <p>Trang thái hồ sơ sẽ được cập nhật liên tục. Các trạng thái có thể bao gồm:</p>
                     <ul className="list-disc list-inside space-y-2">
                         <li><b>Đang trong quá trình xử lý:</b> Hồ sơ của bạn đã được tiếp nhận và đang chờ xét duyệt.</li>
-                        <ImagePlaceholder src="/images/trang-thai-cho-xu-ly.png" alt="Ví dụ về trạng thái đang xử lý." />
+                        <ImagePlaceholder src="/images/trang-thai-cho-xu-ly.png" alt="Ví dụ về trạng thái đang xử lý." size="50%" />
                         <li><b>Yêu cầu bổ sung:</b> Hồ sơ của bạn còn thiếu hoặc sai sót. Vui lòng đọc kỹ thông báo và nhấn "Cập nhật hồ sơ ngay" để bổ sung.</li>
-                        <ImagePlaceholder src="/images/trang-thai-can-bo-sung.png" alt="Ví dụ về trạng thái cần bổ sung." />
+                        <ImagePlaceholder src="/images/trang-thai-can-bo-sung.png" alt="Ví dụ về trạng thái cần bổ sung." size="50%" />
                         <li><b>Hồ sơ hợp lệ:</b> Chúc mừng! Hồ sơ của bạn đã hợp lệ. Đây là điều kiện cần để được xét trúng tuyển.</li>
-                        <ImagePlaceholder src="/images/trang-thai-hop-le.png" alt="Ví dụ về trạng thái hồ sơ hợp lệ." />
+                        <ImagePlaceholder src="/images/trang-thai-hop-le.png" alt="Ví dụ về trạng thái hồ sơ hợp lệ." size="50%" />
                         <li><b>Kết quả trúng tuyển:</b> Khi có kết quả cuối cùng, trang "Kết quả trúng tuyển" sẽ hiển thị thông báo. Nếu trúng tuyển, hệ thống sẽ ghi rõ Ngành và Định hướng bạn đã trúng tuyển.</li>
-                        <ImagePlaceholder src="/images/ket-qua-trung-tuyen.png" alt="Ví dụ về kết quả trúng tuyển, hiển thị rõ ngành và định hướng." />
+                        <ImagePlaceholder src="/images/ket-qua-trung-tuyen.png" alt="VíV dụ về kết quả trúng tuyển, hiển thị rõ ngành và định hướng." size="50%" />
                         <li><b>Không trúng tuyển:</b> Mặc dù hồ sơ của bạn hợp lệ, kết quả cuối cùng phụ thuộc vào điểm xét tuyển và chỉ tiêu của ngành. Rất tiếc bạn đã không trúng tuyển đợt này.</li>
-                        <ImagePlaceholder src="/images/ket-qua-khong-trung-tuyen.png" alt="Ví dụ về kết quả không trúng tuyển." />
+                        <ImagePlaceholder src="/images/ket-qua-khong-trung-tuyen.png" alt="Ví dụ về kết quả không trúng tuyển." size="50%" />
                         <li><b>Hồ sơ không hợp lệ:</b> Rất tiếc, hồ sơ của bạn không hợp lệ. Lý do sẽ được ghi rõ trong thông báo.</li>
-                        <ImagePlaceholder src="/images/trang-thai-khong-hop-le.png" alt="Ví dụ về trạng thái hồ sơ không hợp lệ." />
+                        <ImagePlaceholder src="/images/trang-thai-khong-hop-le.png" alt="Ví dụ về trạng thái hồ sơ không hợp lệ." size="50%" />
                     </ul>
                 </>
             )}
@@ -255,7 +360,7 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                         <>
                             <p>Sau khi đăng nhập với tài khoản Admin/Sub-admin, bạn sẽ được đưa đến Bảng điều khiển.</p>
                             <p>Tại đây, bạn có thể xem các số liệu thống kê tổng quan về số lượng hồ sơ, nguyện vọng và các ngành được đăng ký.</p>
-                            <ImagePlaceholder src="/images/admin-dashboard.png" alt="Giao diện bảng điều khiển của Admin." />
+                            <ImagePlaceholder src="/images/admin-dashboard.png" alt="Giao diện bảng điều khiển của Admin." size="75%" />
                         </>
                     )}
 
@@ -263,7 +368,7 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                         <>
                             <p>Sử dụng thanh tìm kiếm trong phần "Danh sách thí sinh" để tìm kiếm nhanh một thí sinh theo Họ tên, Email, Số điện thoại hoặc Ngày sinh.</p>
                             <p>Nhấn vào "Xem hồ sơ" để xem chi tiết toàn bộ thông tin và các tài liệu mà thí sinh đã nộp. Tại đây, bạn cũng có thể chọn "Chỉnh sửa Hồ sơ" để thay đổi thông tin nếu cần.</p>
-                            <ImagePlaceholder src="/images/admin-tim-kiem.png" alt="Chức năng tìm kiếm và xem hồ sơ thí sinh." />
+                            <ImagePlaceholder src="/images/admin-tim-kiem.png" alt="Chức năng tìm kiếm và xem hồ sơ thí sinh." size="75%" />
                         </>
                     )}
 
@@ -271,7 +376,7 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                         <>
                             <p>Chức năng này cho phép Admin đặt thời hạn cuối cùng cho việc nộp và chỉnh sửa hồ sơ. Sau thời gian này, thí sinh sẽ không thể lưu hồ sơ được nữa.</p>
                             <p>Chọn ngày và giờ, sau đó nhấn "Lưu Hạn nộp".</p>
-                            <ImagePlaceholder src="/images/admin-quan-ly-han-nop.png" alt="Giao diện quản lý hạn nộp hồ sơ." />
+                            <ImagePlaceholder src="/images/admin-quan-ly-han-nop.png" alt="Giao diện quản lý hạn nộp hồ sơ." size="75%" />
                         </>
                     )}
 
@@ -284,7 +389,7 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                                 <li><b>Quản lý trạng thái:</b> Có thể "Tạm dừng" hoặc "Bỏ tạm dừng" tài khoản của một cán bộ.</li>
                                 <li><b>Xóa quyền:</b> Xóa hoàn toàn tài khoản của một cán bộ khỏi hệ thống.</li>
                             </ul>
-                            <ImagePlaceholder src="/images/admin-quan-ly-can-bo.png" alt="Giao diện quản lý cán bộ dành cho Admin." />
+                            <ImagePlaceholder src="/images/admin-quan-ly-can-bo.png" alt="Giao diện quản lý cán bộ dành cho Admin." size="75%" />
                         </>
                     )}
                 </>
