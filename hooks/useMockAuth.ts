@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { User } from '../types';
 import { SCRIPT_URL } from '../constants';
@@ -58,8 +59,14 @@ export const apiCall = async (payload: object): Promise<any> => {
   } catch (error: any) {
     // This catch block handles network failures (e.g., no internet) 
     // or errors thrown from the logic above.
-    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        throw new Error('Lỗi mạng khi thực hiện yêu cầu. Vui lòng kiểm tra kết nối internet của bạn và thử lại.');
+    const errorMessage = error.message || '';
+    const isNetworkError = 
+        (error.name === 'TypeError' && errorMessage.includes('Failed to fetch')) || // Chrome/Edge
+        errorMessage.includes('NetworkError') || // Firefox
+        errorMessage.includes('Network request failed'); // Safari/Mobile
+
+    if (isNetworkError) {
+        throw new Error('Lỗi kết nối mạng. Vui lòng kiểm tra đường truyền, tắt trình chặn quảng cáo (AdBlock) hoặc giảm dung lượng file (<5MB) nếu đang tải lên.');
     }
     // Re-throw other errors (like the ones we created above).
     throw error;

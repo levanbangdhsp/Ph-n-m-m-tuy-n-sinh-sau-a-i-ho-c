@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { User, Page } from '../types';
 import Footer from '../components/Footer';
 import { apiCall } from '../hooks/useMockAuth';
@@ -10,7 +11,6 @@ import InputField from '../components/InputField';
 import { validatePassword, PasswordValidationResult, formatFullName } from '../utils/validation';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 import SearchIcon from '../components/icons/SearchIcon';
-import EyeIcon from '../components/icons/EyeIcon';
 
 // Type definitions for the data fetched from the backend
 interface Stats {
@@ -62,6 +62,18 @@ interface DashboardData {
 
 const ADMIN_EMAIL = 'banglv@hcmue.edu.vn';
 
+// Helper function for accent-insensitive search
+const normalizeSearchText = (str: any): string => {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D")
+        .toLowerCase()
+        .trim();
+};
+
 const AdminDashboardPage: React.FC<{
   user: User;
   onLogout: () => void;
@@ -73,7 +85,6 @@ const AdminDashboardPage: React.FC<{
     
     // State for candidate search
     const [searchTerm, setSearchTerm] = useState('');
-    const [hasSearched, setHasSearched] = useState(false);
     
     // State for viewing a specific applicant's full data
     const [selectedApplicant, setSelectedApplicant] = useState<Candidate | null>(null);
@@ -130,24 +141,39 @@ const AdminDashboardPage: React.FC<{
         fetchDashboardData();
     }, []);
 
-    const filteredCandidates = useMemo(() => {
-        if (!searchTerm.trim()) {
+    // --- LOGIC TÌM KIẾM CHÍNH XÁC (GOOGLE STYLE) ---
+    // Biến này chứa danh sách ĐÃ LỌC để hiển thị ra màn hình
+    const displayData = useMemo(() => {
+        if (!data?.candidates) return [];
+        
+        const term = searchTerm.trim();
+        
+        // Nếu ô tìm kiếm trống -> Trả về mảng rỗng (để ẩn bảng)
+        if (!term) {
             return [];
         }
-        const lowercasedFilter = searchTerm.toLowerCase();
-        return data?.candidates.filter(candidate =>
-            (candidate.hoTen && candidate.hoTen.toLowerCase().includes(lowercasedFilter)) ||
-            (candidate.email && candidate.email.toLowerCase().includes(lowercasedFilter)) ||
-            (candidate.phone && candidate.phone.includes(lowercasedFilter)) ||
-            (candidate.ngaySinh && candidate.ngaySinh.includes(lowercasedFilter))
-        ) || [];
+
+        // Tách từ khóa: "Nguyen 1971" -> ["nguyen", "1971"]
+        const tokens = normalizeSearchText(term).split(/\s+/).filter(t => t.length > 0);
+
+        // Lọc danh sách
+        return data.candidates.filter(candidate => {
+            // Gom tất cả thông tin hiển thị vào một chuỗi
+            const searchableText = `
+                ${normalizeSearchText(candidate.hoTen)} 
+                ${normalizeSearchText(candidate.email)} 
+                ${normalizeSearchText(candidate.phone)} 
+                ${normalizeSearchText(candidate.ngaySinh)} 
+                ${normalizeSearchText(candidate.noiSinh)}
+            `;
+            
+            // Kiểm tra: Chuỗi thông tin phải chứa TẤT CẢ các từ khóa
+            return tokens.every(token => searchableText.includes(token));
+        });
     }, [searchTerm, data?.candidates]);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
-        if (e.target.value.trim() !== '' && !hasSearched) {
-            setHasSearched(true);
-        }
     };
     
     const handleViewProfile = async (applicant: Candidate) => {
@@ -427,7 +453,7 @@ const AdminDashboardPage: React.FC<{
 
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <h2 className="text-xl font-bold text-sky-800 pb-2 mb-4 border-b">Danh sách thí sinh</h2>
-                    <div className="relative mb-4">
+                    <div className="relative mb-2">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <SearchIcon className="h-5 w-5 text-gray-400" />
                         </div>
@@ -439,42 +465,55 @@ const AdminDashboardPage: React.FC<{
                             className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-sky-500"
                         />
                     </div>
-                    {hasSearched && (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left text-gray-500">
-                                <thead className="text-xs text-white uppercase bg-sky-600 font-semibold">
-                                    <tr>
-                                        <th scope="col" className="px-2 py-3 w-16 text-center">STT</th>
-                                        <th scope="col" className="px-4 py-3">Họ và tên</th>
-                                        <th scope="col" className="px-4 py-3">Email</th>
-                                        <th scope="col" className="px-4 py-3">Số điện thoại</th>
-                                        <th scope="col" className="px-4 py-3">Ngày sinh</th>
-                                        <th scope="col" className="px-4 py-3">Nơi sinh</th>
-                                        <th scope="col" className="px-4 py-3 text-center">Hành động</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredCandidates.length > 0 ? filteredCandidates.map((candidate, index) => (
-                                        <tr key={candidate.id} className="bg-white border-b hover:bg-gray-50">
-                                            <td className="px-2 py-4 text-center font-medium text-gray-700">{index + 1}</td>
-                                            <td className="px-4 py-4 font-medium text-gray-900">{candidate.hoTen}</td>
-                                            <td className="px-4 py-4">{candidate.email}</td>
-                                            <td className="px-4 py-4">{candidate.phone}</td>
-                                            <td className="px-4 py-4">{candidate.ngaySinh}</td>
-                                            <td className="px-4 py-4">{candidate.noiSinh}</td>
-                                            <td className="px-4 py-4 text-center">
-                                                <button onClick={() => handleViewProfile(candidate)} className="font-medium text-sky-600 hover:underline">
-                                                    Xem hồ sơ
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    )) : (
-                                        <tr><td colSpan={7} className="text-center py-4 text-red-500 font-semibold">Không tìm thấy thí sinh nào khớp với điều kiện tìm kiếm.</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                    {searchTerm && (
+                        <p className="mb-4 text-sm font-medium text-gray-600">
+                            Tìm thấy <span className="text-sky-600 font-bold">{displayData.length}</span> kết quả.
+                        </p>
                     )}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left text-gray-500">
+                            {/* Cập nhật header với màu xanh đậm hơn một chút để user nhận ra sự thay đổi */}
+                            <thead className="text-xs text-white uppercase bg-sky-700 font-bold">
+                                <tr>
+                                    <th scope="col" className="px-2 py-3 w-20 text-center">STT</th>
+                                    <th scope="col" className="px-4 py-3">Họ và tên</th>
+                                    <th scope="col" className="px-4 py-3">Email</th>
+                                    <th scope="col" className="px-4 py-3">Số điện thoại</th>
+                                    <th scope="col" className="px-4 py-3">Ngày sinh</th>
+                                    <th scope="col" className="px-4 py-3">Nơi sinh</th>
+                                    <th scope="col" className="px-4 py-3 text-center">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {/* Bắt buộc sử dụng displayData để hiển thị. 
+                                    Sử dụng key kết hợp ID và Index để ép React render lại hoàn toàn */}
+                                {displayData.length > 0 ? displayData.map((candidate, index) => (
+                                    <tr key={`${candidate.id}-${index}`} className="bg-white border-b hover:bg-gray-50">
+                                        <td className="px-2 py-4 text-center font-medium text-gray-700">{index + 1}</td>
+                                        <td className="px-4 py-4 font-medium text-gray-900">{candidate.hoTen}</td>
+                                        <td className="px-4 py-4">{candidate.email}</td>
+                                        <td className="px-4 py-4">{candidate.phone}</td>
+                                        <td className="px-4 py-4">{candidate.ngaySinh}</td>
+                                        <td className="px-4 py-4">{candidate.noiSinh}</td>
+                                        <td className="px-4 py-4 text-center">
+                                            <button onClick={() => handleViewProfile(candidate)} className="font-medium text-sky-600 hover:underline">
+                                                Xem hồ sơ
+                                            </button>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan={7} className="text-center py-8 text-gray-500">
+                                            {searchTerm.trim() 
+                                                ? 'Không tìm thấy thí sinh nào khớp với điều kiện tìm kiếm.' 
+                                                : 'Vui lòng nhập từ khóa (Họ tên, Email, SĐT, Ngày sinh) để tìm kiếm.'
+                                            }
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-md">

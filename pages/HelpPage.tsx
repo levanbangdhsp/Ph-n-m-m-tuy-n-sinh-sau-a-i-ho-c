@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Page, User } from '../types';
 import Header from '../components/Header';
@@ -5,6 +6,7 @@ import Footer from '../components/Footer';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
 import ExclamationTriangleIcon from '../components/icons/ExclamationTriangleIcon';
 import InformationCircleIcon from '../components/icons/InformationCircleIcon';
+import SparklesIcon from '../components/icons/SparklesIcon';
 
 interface HelpPageProps {
   user: User | null;
@@ -21,6 +23,7 @@ const SECTIONS = [
   { id: 'quen-mat-khau', title: 'Quên mật khẩu', parent: 'tai-khoan' },
   { id: 'nop-ho-so', title: '2. Nộp Hồ sơ Dự tuyển', parent: 'applicant-guide' },
   { id: 'theo-doi', title: '3. Theo dõi Trạng thái', parent: 'applicant-guide' },
+  { id: 'chatbot-guide', title: '4. Sử dụng Trợ lý ảo AI', parent: 'applicant-guide' },
   { id: 'admin-guide', title: 'B. Dành cho Quản trị viên', parent: '' },
   { id: 'admin-dashboard', title: '1. Bảng điều khiển', parent: 'admin-guide' },
   { id: 'admin-search', title: '2. Tìm kiếm và Xem hồ sơ', parent: 'admin-guide' },
@@ -328,13 +331,23 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                     <h5 className="font-semibold text-lg mt-4">Bước 6: Xem lại và Nộp hồ sơ</h5>
                     <p>Sau khi hoàn thành tất cả các bước, hãy đến Bước 6 để xem lại toàn bộ thông tin. Khi đã chắc chắn mọi thứ đều chính xác, nhấn nút <strong>"Nộp hồ sơ"</strong> để gửi hồ sơ đến phòng Sau đại học.</p>
                     <ImagePlaceholder src="/images/ho-so-nop.png" alt="Bước cuối cùng: Xem lại và Nộp hồ sơ." />
+
+                    <h4 className="font-bold text-xl mt-6 mb-2">Các chức năng ở Bước 6</h4>
+                    <p>Ở Bước 6, sau khi đã điền đầy đủ thông tin, bạn sẽ thấy các nút chức năng sau:</p>
+                    <ul className="list-disc list-inside space-y-2">
+                        <li><strong>Nộp hồ sơ:</strong> Đây là nút quan trọng nhất, dùng để gửi hồ sơ của bạn đến Phòng Sau đại học sau khi đã kiểm tra kỹ lưỡng toàn bộ thông tin.</li>
+                        <li><strong>In thông tin:</strong> Nút này cho phép bạn tạo một bản in (hoặc lưu dưới dạng PDF) toàn bộ thông tin đã khai trong hồ sơ. Bạn nên lưu lại một bản để đối chiếu sau này.</li>
+                        <li><strong>Xem hồ sơ:</strong> Sau khi nộp, nút này sẽ đưa bạn thẳng đến trang 'Trạng thái hồ sơ' để bạn có thể theo dõi tiến trình xử lý hồ sơ của mình ngay lập tức.</li>
+                        <li><strong>QR Code lệ phí:</strong> Nhấn vào đây để hệ thống tự động tạo một mã QR Code thanh toán lệ phí dự tuyển. Bạn có thể dùng ứng dụng ngân hàng trên điện thoại để quét và thanh toán một cách nhanh chóng, tiện lợi. Nội dung chuyển khoản đã được điền sẵn để đảm bảo không có sai sót.</li>
+                    </ul>
+                    <ImagePlaceholder src="/images/help-step6-buttons.png" alt="Các nút chức năng ở Bước 6." />
                 </>
             )}
 
             {renderSection('theo-doi', '3. Theo dõi Trạng thái', 2,
                 <>
                     <p>Sau khi nộp hồ sơ, bạn có thể theo dõi tiến trình xử lý bằng cách chọn "Kết quả xét hồ sơ" hoặc "Kết quả trúng tuyển" từ trang chủ.</p>
-                    <p>Trang thái hồ sơ sẽ được cập nhật liên tục. Các trạng thái có thể bao gồm:</p>
+                    <p>Trạng thái hồ sơ sẽ được cập nhật liên tục. Các trạng thái có thể bao gồm:</p>
                     <ul className="list-disc list-inside space-y-2">
                         <li><b>Đang trong quá trình xử lý:</b> Hồ sơ của bạn đã được tiếp nhận và đang chờ xét duyệt.</li>
                         <ImagePlaceholder src="/images/trang-thai-cho-xu-ly.png" alt="Ví dụ về trạng thái đang xử lý." size="50%" />
@@ -343,13 +356,75 @@ const HelpPage: React.FC<HelpPageProps> = ({ user, onLogout, navigate }) => {
                         <li><b>Hồ sơ hợp lệ:</b> Chúc mừng! Hồ sơ của bạn đã hợp lệ. Đây là điều kiện cần để được xét trúng tuyển.</li>
                         <ImagePlaceholder src="/images/trang-thai-hop-le.png" alt="Ví dụ về trạng thái hồ sơ hợp lệ." size="50%" />
                         <li><b>Kết quả trúng tuyển:</b> Khi có kết quả cuối cùng, trang "Kết quả trúng tuyển" sẽ hiển thị thông báo. Nếu trúng tuyển, hệ thống sẽ ghi rõ Ngành và Định hướng bạn đã trúng tuyển.</li>
-                        <ImagePlaceholder src="/images/ket-qua-trung-tuyen.png" alt="VíV dụ về kết quả trúng tuyển, hiển thị rõ ngành và định hướng." size="50%" />
+                        <ImagePlaceholder src="/images/ket-qua-trung-tuyen.png" alt="Ví dụ về kết quả trúng tuyển, hiển thị rõ ngành và định hướng." size="50%" />
                         <li><b>Không trúng tuyển:</b> Mặc dù hồ sơ của bạn hợp lệ, kết quả cuối cùng phụ thuộc vào điểm xét tuyển và chỉ tiêu của ngành. Rất tiếc bạn đã không trúng tuyển đợt này.</li>
                         <ImagePlaceholder src="/images/ket-qua-khong-trung-tuyen.png" alt="Ví dụ về kết quả không trúng tuyển." size="50%" />
                         <li><b>Hồ sơ không hợp lệ:</b> Rất tiếc, hồ sơ của bạn không hợp lệ. Lý do sẽ được ghi rõ trong thông báo.</li>
                         <ImagePlaceholder src="/images/trang-thai-khong-hop-le.png" alt="Ví dụ về trạng thái hồ sơ không hợp lệ." size="50%" />
                     </ul>
                 </>
+            )}
+
+            {renderSection('chatbot-guide', '4. Sử dụng Trợ lý ảo AI (Thông minh & Đa phương thức)', 2,
+              <>
+                <p>Trợ lý tuyển sinh nay đã được nâng cấp với trí tuệ nhân tạo (AI) thế hệ mới. Không chỉ trả lời tin nhắn văn bản, trợ lý còn có khả năng <strong>"Nghe"</strong> giọng nói và <strong>"Nhìn"</strong> hình ảnh để tư vấn chính xác các trường hợp hồ sơ cụ thể của riêng bạn.</p>
+                
+                <div className="my-6 p-4 rounded-md border-l-4 border-indigo-500 bg-indigo-50 flex items-start gap-4">
+                    <SparklesIcon className="h-6 w-6 text-indigo-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <h4 className="font-bold text-indigo-800">CÁC TÍNH NĂNG NỔI BẬT MỚI</h4>
+                        <ul className="list-disc list-inside mt-2 space-y-4 text-indigo-900">
+                            <li>
+                                <strong>🗣️ Hỏi bằng giọng nói (Rảnh tay & Tiện lợi):</strong>
+                                <div className="pl-5 mt-1">
+                                     <p className="text-sm">Bạn đang dùng điện thoại và ngại gõ phím? Hãy nhấn vào biểu tượng <strong>Microphone</strong> và đặt câu hỏi trực tiếp. Trợ lý sẽ lắng nghe, chuyển giọng nói thành văn bản và trả lời bạn ngay lập tức.</p>
+                                </div>
+                            </li>
+                            <li>
+                                <strong>📷 Kiểm tra Văn bằng & Chứng chỉ Ngoại ngữ (Chính xác & An tâm):</strong>
+                                <div className="pl-5 mt-1">
+                                    <p className="text-sm"><strong>Nhu cầu:</strong> Bạn sở hữu <strong>Chứng chỉ ngoại ngữ</strong> (VSTEP, IELTS...) hoặc <strong>Bằng Cử nhân/Thạc sĩ/Tiến sĩ Ngôn ngữ nước ngoài</strong>? Bạn muốn hệ thống thẩm định chắc chắn hồ sơ của mình:</p>
+                                    <ul className="list-circle pl-4 mt-1 space-y-1 text-sm">
+                                        <li>Có <strong>đáp ứng điều kiện năng lực ngoại ngữ đầu vào</strong> hay không?</li>
+                                        <li>Có còn <strong>thời hạn sử dụng</strong> (đối với chứng chỉ) tính đến ngày nộp hồ sơ?</li>
+                                        <li>Đặc biệt: Có được cấp bởi <strong>đơn vị tổ chức thi hợp pháp</strong> theo danh sách công nhận của Bộ GD&ĐT (đối với chứng chỉ VSTEP)?</li>
+                                    </ul>
+                                    <p className="text-sm mt-2"><strong>Cách làm:</strong> Nhấn biểu tượng <strong>Hình ảnh</strong> → Chụp/Tải ảnh văn bằng/chứng chỉ → Gửi cho Trợ lý.</p>
+                                    <p className="text-sm mt-1"><strong>Kết quả:</strong> AI sẽ phân tích toàn diện:</p>
+                                    <ul className="list-disc pl-8 mt-1 space-y-1 text-sm">
+                                         <li><strong>Đối với Chứng chỉ:</strong> Tự động tính toán thời hạn sử dụng (02 năm), đối chiếu điểm số và kiểm tra tên đơn vị cấp chứng chỉ.</li>
+                                         <li><strong>Đối với Văn bằng:</strong> AI sẽ kiểm tra chéo chuyên ngành đào tạo trên văn bằng với ngành bạn dự tuyển để xác định văn bằng này được công nhận để <strong>đáp ứng năng lực ngoại ngữ đầu vào</strong> (thay thế chứng chỉ) hay chỉ được ghi nhận là <strong>điều kiện về trình độ học vấn</strong>.</li>
+                                    </ul>
+                                </div>
+                            </li>
+                            <li>
+                                <strong>📷 Kiểm tra Ngành xét tuyển & Bổ sung kiến thức (Tư vấn chuyên sâu):</strong>
+                                <div className="pl-5 mt-1">
+                                    <p className="text-sm"><strong>Nhu cầu:</strong> Bạn không rõ Bằng Đại học của mình thuộc diện <strong>Ngành đúng</strong>, <strong>Ngành gần</strong> hay <strong>Ngành khác</strong>? Liệu có phải học <strong>Bổ sung kiến thức</strong> trước khi thi không?</p>
+                                    <p className="text-sm mt-1"><strong>Cách làm:</strong> Chụp ảnh Bằng tốt nghiệp Đại học của bạn và gửi cho Trợ lý.</p>
+                                    <p className="text-sm mt-1"><strong>Kết quả:</strong> AI sẽ thực hiện <strong>tra cứu ngược</strong>: Từ tên ngành trên bằng ĐH của bạn, AI sẽ đối chiếu với <strong>Danh mục ngành đúng, ngành phù hợp</strong> trong quy định tuyển sinh để:
+                                    <ul className="list-disc pl-8 mt-1 space-y-1 text-sm">
+                                        <li>Liệt kê danh sách các chuyên ngành Thạc sĩ mà bạn đủ điều kiện dự tuyển.</li>
+                                        <li>Tư vấn cụ thể về việc bạn thuộc diện <strong>không phải học</strong> hay <strong>bắt buộc phải học</strong> chương trình Bổ sung kiến thức.</li>
+                                    </ul>
+                                    </p>
+                                </div>
+                            </li>
+                            <li>
+                                <strong>📷 Kiểm tra Giấy khen & Cộng điểm thưởng (Tối ưu lợi ích):</strong>
+                                <div className="pl-5 mt-1">
+                                    <p className="text-sm"><strong>Nhu cầu:</strong> Bạn có Giấy khen, Bằng khen, Giải thưởng NCKH... và muốn biết liệu chúng có được quy đổi thành điểm thưởng trong hồ sơ xét tuyển?</p>
+                                    <p className="text-sm mt-1"><strong>Cách làm:</strong> Gửi ảnh Giấy khen/Giấy chứng nhận cho Trợ lý.</p>
+                                    <p className="text-sm mt-1"><strong>Kết quả:</strong> AI sẽ phân tích <strong>Cấp ký</strong> (Bộ/Tỉnh/Trường) và <strong>Lĩnh vực</strong> (NCKH/Phong trào) để tư vấn bạn nên kê khai vào mục nào để đạt mức điểm cộng tối đa.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <p className="text-red-600 italic"><strong>Lưu ý:</strong> Các tư vấn của AI có độ chính xác cao nhờ dựa trên dữ liệu tuyển sinh chính thức, nhưng chỉ mang tính chất tham khảo hỗ trợ. Đối với các quyết định quan trọng, vui lòng tham chiếu quy chế tuyển sinh.</p>
+                <ImagePlaceholder src="/images/chatbot-demo.png" alt="Giao diện sử dụng chatbot với các tính năng mới." size="50%" />
+              </>
             )}
 
             {isAdmin && (

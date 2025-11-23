@@ -8,6 +8,7 @@ import HelpPage from './pages/HelpPage';
 import { Page } from './types';
 import { User } from './types';
 import { apiCall } from './hooks/useMockAuth';
+import Chatbot from './components/Chatbot';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Landing);
@@ -122,6 +123,7 @@ const App: React.FC = () => {
   return (
     <div className="bg-gray-100 min-h-screen font-sans">
       {renderPage()}
+      <Chatbot />
     </div>
   );
 };

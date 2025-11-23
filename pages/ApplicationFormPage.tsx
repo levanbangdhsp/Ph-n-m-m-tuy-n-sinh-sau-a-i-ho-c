@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, ApplicationFormData, Page } from '../types';
 import RadioGroup from '../components/RadioGroup';
@@ -291,11 +292,11 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
     { key: 'linkSoYeuLyLich', label: '2. Sơ yếu lý lịch', description: "Có xác nhận của cơ quan công tác hoặc chính quyền địa phương. (PDF/JPG/PNG, Tối đa 5MB)", isRequired: () => true },
     { key: 'linkMinhChungLePhi', label: '3. Minh chứng về nộp lệ phí dự tuyển', description: "Ảnh chụp màn hình hoặc biên lai chuyển khoản. (PDF/JPG/PNG, Tối đa 5MB)", isRequired: () => true },
     { key: 'linkAnhThe', label: '4. Ảnh thẻ 4x6', isRequired: () => true, description: "Yêu cầu ảnh chụp rõ mặt, nền trắng. (JPG, PNG, PDF. Tối đa 5MB)" },
-    { key: 'linkBangVaBangDiem_combined', label: '5. Bản scan Bằng tốt nghiệp và Bảng điểm đại học', isRequired: () => true, description: "Vui lòng gom Bằng tốt nghiệp và Bảng điểm vào một file PDF duy nhất để tải lên. (PDF, Tối đa 10MB)" },
+    { key: 'linkBangVaBangDiem_combined', label: '5. Bản scan Bằng tốt nghiệp và Bảng điểm đại học', isRequired: () => true, description: "Vui lòng gom Bằng tốt nghiệp và Bảng điểm vào một file PDF duy nhất để tải lên. (PDF, Tối đa 5MB)" },
     { key: 'linkChungChiNN', label: '6. Bản scan Chứng chỉ ngoại ngữ', isRequired: () => true, description: "File PDF hoặc ảnh chụp rõ nét, có công chứng. (JPG, PNG, PDF. Tối đa 5MB)" },
     { key: 'linkGiayChungNhanBSKT', label: '7. Giấy chứng nhận hoàn thành bổ sung kiến thức (nếu có)', isRequired: (data: ApplicationFormData) => data.supplementaryCert === 'Có', description: "File PDF hoặc ảnh chụp rõ nét. (JPG, PNG, PDF. Tối đa 5MB)" },
     { key: 'linkUuTien', label: '8. Minh chứng đối tượng ưu tiên (nếu có)', isRequired: (data: ApplicationFormData) => data.priorityCategory !== '0', description: "File PDF hoặc ảnh chụp các giấy tờ xác nhận. (JPG, PNG, PDF. Tối đa 5MB)" },
-    { key: 'linkNCKH', label: '9. Minh chứng NCKH & thành tích khác (nếu có)', isRequired: (data: ApplicationFormData) => data.researchAchievements !== 'NCKH0' || data.otherAchievements !== 'KHAC0', description: "Gom các minh chứng vào một file PDF duy nhất để tải lên. (PDF, Tối đa 10MB)" }
+    { key: 'linkNCKH', label: '9. Minh chứng NCKH & thành tích khác (nếu có)', isRequired: (data: ApplicationFormData) => data.researchAchievements !== 'NCKH0' || data.otherAchievements !== 'KHAC0', description: "Gom các minh chứng vào một file PDF duy nhất để tải lên. (PDF, Tối đa 5MB)" }
   ], []);
 
   useEffect(() => {
@@ -1426,7 +1427,7 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                                         <FileUploadField 
                                             user={targetUser} 
                                             label="5. Bản scan Bằng tốt nghiệp và Bảng điểm đại học" 
-                                            description="Vui lòng gom Bằng tốt nghiệp và Bảng điểm vào một file PDF duy nhất để tải lên. (Định dạng: PDF. Tối đa 10MB)" 
+                                            description="Vui lòng gom Bằng tốt nghiệp và Bảng điểm vào một file PDF duy nhất để tải lên. (Định dạng: PDF. Tối đa 5MB)" 
                                             targetFileName="BangVaBangDiem" 
                                             linkColumnHeader="Link Bằng tốt nghiệp" 
                                             value={formData.linkBangTotNghiep} 
@@ -1445,14 +1446,14 @@ const ApplicationFormPage: React.FC<ApplicationFormPageProps> = ({ user, onLogou
                                                 }));
                                             }} 
                                             acceptedFileTypes={['application/pdf']}
-                                            maxFileSizeMB={10}
+                                            maxFileSizeMB={5}
                                             error={errors.linkBangTotNghiep || errors.linkBangDiem} 
                                         />
                                     </div>
                                     <div id="file-upload-wrapper-linkChungChiNN"><FileUploadField user={targetUser} label="6. Bản scan Chứng chỉ ngoại ngữ" description="File PDF hoặc ảnh chụp rõ nét, có công chứng. (Định dạng: JPG, PNG, PDF. Tối đa 5MB)" targetFileName="ChungChiNN" linkColumnHeader="Link Chứng chỉ NN" value={formData.linkChungChiNN} onUploadComplete={(url) => handleFileUploadComplete('linkChungChiNN', url)} onDelete={() => handleFileDelete('linkChungChiNN')} error={errors.linkChungChiNN} /></div>
                                     <div id="file-upload-wrapper-linkGiayChungNhanBSKT"><FileUploadField user={targetUser} label="7. Giấy chứng nhận hoàn thành bổ sung kiến thức (nếu có)" description="File PDF hoặc ảnh chụp rõ nét. (JPG, PNG, PDF. Tối đa 5MB)" targetFileName="GiayChungNhanBSKT" linkColumnHeader="Link Giấy chứng nhận BSKT" value={formData.linkGiayChungNhanBSKT} onUploadComplete={(url) => handleFileUploadComplete('linkGiayChungNhanBSKT', url)} onDelete={() => handleFileDelete('linkGiayChungNhanBSKT')} error={errors.linkGiayChungNhanBSKT} /></div>
                                     <div id="file-upload-wrapper-linkUuTien"><FileUploadField user={targetUser} label="8. Minh chứng đối tượng ưu tiên (nếu có)" description="File PDF hoặc ảnh chụp các giấy tờ xác nhận. (Định dạng: JPG, PNG, PDF. Tối đa 5MB)" targetFileName="UuTien" linkColumnHeader="Link Ưu tiên" value={formData.linkUuTien} onUploadComplete={(url) => handleFileUploadComplete('linkUuTien', url)} onDelete={() => handleFileDelete('linkUuTien')} error={errors.linkUuTien} /></div>
-                                    <div id="file-upload-wrapper-linkNCKH"><FileUploadField user={targetUser} label="9. Minh chứng NCKH & thành tích khác (nếu có)" description="Gom các minh chứng vào một file PDF duy nhất để tải lên. (Định dạng: PDF. Tối đa 10MB)" targetFileName="NCKH_ThanhTich" linkColumnHeader="Link NCKH và thành tích khác" value={formData.linkNCKH} onUploadComplete={(url) => handleFileUploadComplete('linkNCKH', url)} onDelete={() => handleFileDelete('linkNCKH')} acceptedFileTypes={['application/pdf']} maxFileSizeMB={10} error={errors.linkNCKH} /></div>
+                                    <div id="file-upload-wrapper-linkNCKH"><FileUploadField user={targetUser} label="9. Minh chứng NCKH & thành tích khác (nếu có)" description="Gom các minh chứng vào một file PDF duy nhất để tải lên. (Định dạng: PDF. Tối đa 5MB)" targetFileName="NCKH_ThanhTich" linkColumnHeader="Link NCKH và thành tích khác" value={formData.linkNCKH} onUploadComplete={(url) => handleFileUploadComplete('linkNCKH', url)} onDelete={() => handleFileDelete('linkNCKH')} acceptedFileTypes={['application/pdf']} maxFileSizeMB={5} error={errors.linkNCKH} /></div>
                                 </div>
                             </div>
                         </section>

@@ -1,4 +1,4 @@
-export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxBKifN5PbJOezJ4Teh-5rAOUKDtieAWjGoIeehGkFkbkxV7j78_Cw1pSUlBVi_87m7/exec';
+export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKmZ7m3ip6NbaxJ1tqosukag5XQMXhgtK1EM3pYzBCY8R-rYqCeiakRDB1Rm2boUy2/exec';
 
 export const GENDERS = ['Nam', 'Nữ', 'Khác'];
 export const NATIONALITIES = ['Việt Nam', 'Lào', 'Campuchia', 'Thái Lan', 'Trung Quốc', 'Nhật Bản', 'Hàn Quốc', 'Khác'];
